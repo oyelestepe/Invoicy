@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
+import './css/invoiceCreation.css';
 
 const InvoiceCreation = () => {
   const [clientName, setClientName] = useState('');
@@ -39,37 +40,40 @@ const InvoiceCreation = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input 
-        type="text" 
-        placeholder="Müşteri İsmi" 
-        value={clientName} 
-        onChange={(e) => setClientName(e.target.value)} 
-        required
-      />
-      <input 
-        type="email" 
-        placeholder="Müşteri E-posta" 
-        value={clientEmail} 
-        onChange={(e) => setClientEmail(e.target.value)} 
-        required
-      />
-      <input 
-        type="text" 
-        placeholder="Hizmet Açıklaması" 
-        value={serviceDescription} 
-        onChange={(e) => setServiceDescription(e.target.value)} 
-        required
-      />
-      <input 
-        type="number" 
-        placeholder="Tutar" 
-        value={amount} 
-        onChange={(e) => setAmount(e.target.value)} 
-        required
-      />
-      <button type="submit">Fatura Oluştur</button>
-    </form>
+    <div className="invoice-creation-container">
+      <h1>Fatura Oluştur</h1>
+      <form className="invoice-form" onSubmit={handleSubmit}>
+        <input 
+          type="text" 
+          placeholder="Müşteri İsmi" 
+          value={clientName} 
+          onChange={(e) => setClientName(e.target.value)} 
+          required
+        />
+        <input 
+          type="email" 
+          placeholder="Müşteri E-posta" 
+          value={clientEmail} 
+          onChange={(e) => setClientEmail(e.target.value)} 
+          required
+        />
+        <input 
+          type="text" 
+          placeholder="Hizmet Açıklaması" 
+          value={serviceDescription} 
+          onChange={(e) => setServiceDescription(e.target.value)} 
+          required
+        />
+        <input 
+          type="number" 
+          placeholder="Tutar" 
+          value={amount} 
+          onChange={(e) => setAmount(e.target.value)} 
+          required
+        />
+        <button type="submit">Fatura Oluştur</button>
+      </form>
+    </div>
   );
 };
 
