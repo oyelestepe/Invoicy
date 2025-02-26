@@ -1,75 +1,97 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
-import PDFDocument from 'pdfkit/js/pdfkit.standalone';
-import blobStream from 'blob-stream';
+import { useNavigate, useParams } from 'react-router-dom';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { db, auth } from '../firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
+import Navbar from '../components/Navbar';
+import { jsPDF } from 'jspdf';
+import './css/invoiceDetails.css'; 
 
-// Polyfill for the global object in the browser
-if (typeof window !== "undefined") {
-  window.global = window;
-}
-
-
-const InvoiceDetail = () => {
+const InvoiceDetails = () => {
   const { invoiceId } = useParams();
   const [invoice, setInvoice] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const navigate = useNavigate();
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setUserId(user.uid);
+    } else {
+      navigate('/login');
+    }
+  });
 
   useEffect(() => {
     const fetchInvoice = async () => {
-      const docRef = doc(db, 'invoices', invoiceId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setInvoice(docSnap.data());
-      } else {
-        console.log('No such document!');
+      if (userId && invoiceId) {
+        const docRef = doc(db, 'customers', userId, 'invoices', invoiceId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setInvoice(docSnap.data());
+        } else {
+          console.log('No such document!');
+        }
       }
     };
-
     fetchInvoice();
-  }, [invoiceId]);
+  }, [userId, invoiceId]);
+
+  const deleteInvoice = async () => {
+    const confirmDelete = window.confirm('Bu faturayı silmek istediğinizden emin misiniz?');
+    if (confirmDelete) {
+      try {
+        const docRef = doc(db, 'customers', userId, 'invoices', invoiceId);
+        await deleteDoc(docRef);
+        alert('Fatura başarıyla silindi.');
+        navigate('/dashboard');
+      } catch (error) {
+        console.error('Fatura silinirken hata:', error);
+        alert('Fatura silinirken bir hata oluştu.');
+      }
+    }
+  };
 
   const generatePDF = () => {
-    const doc = new PDFDocument();
-    const stream = doc.pipe(blobStream());
+    if (!invoice) return;
 
-    doc.font('Helvetica-Bold').fontSize(18).text('FATURA', { align: 'center' });
-    doc.moveDown();
-    doc.font('Helvetica').fontSize(14).text(`Müşteri İsmi: ${invoice.clientName}`);
-    doc.text(`Müşteri E-posta: ${invoice.clientEmail}`);
-    doc.text(`Hizmet Açıklaması: ${invoice.serviceDescription}`);
-    doc.text(`Tutar: ${invoice.amount} TL`);
-    doc.moveDown();
-    doc.text(`Oluşturulma Tarihi: ${new Date().toLocaleDateString()}`);
+    const doc = new jsPDF();
 
+    doc.setFontSize(22);
+    doc.text('Fatura', 20, 20);
 
-    stream.on('finish', () => {
-      const url = stream.toBlobURL('application/pdf');
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'fatura.pdf';
-      link.click();
-    });
+    doc.setFontSize(14);
+    doc.text(`Müşteri Adı: ${invoice.clientName}`, 20, 40);
+    doc.text(`Müşteri E-mail: ${invoice.clientEmail}`, 20, 50);
+    doc.text(`Hizmet Açıklaması: ${invoice.serviceDescription}`, 20, 60);
+    doc.text(`Tutar: ${invoice.amount} TL`, 20, 70);
+    doc.text(`Oluşturulma Tarihi: ${invoice.createdAt?.toDate().toLocaleString()}`, 20, 80);
 
-    doc.end();
+    doc.save(`fatura-${invoiceId}.pdf`);
   };
 
   return (
-    <div>
-      <h1>Fatura Detayı</h1>
-      {invoice ? (
-        <div>
-          <p><strong>Müşteri İsmi:</strong> {invoice.clientName}</p>
-          <p><strong>Müşteri E-posta:</strong> {invoice.clientEmail}</p>
-          <p><strong>Hizmet:</strong> {invoice.serviceDescription}</p>
-          <p><strong>Tutar:</strong> {invoice.amount} TL</p>
-          <button onClick={generatePDF}>PDF İndir</button>
-        </div>
-      ) : (
-        <p>Fatura yükleniyor...</p>
-      )}
-    </div>
+    <>
+      <Navbar />
+      <div className="invoice-details-container">
+        <h2>Fatura Detayları</h2>
+        {invoice ? (
+          <div>
+            <p><strong>Müşteri Adı:</strong> {invoice.clientName}</p>
+            <p><strong>Müşteri E-mail:</strong> {invoice.clientEmail}</p>
+            <p><strong>Hizmet Açıklaması:</strong> {invoice.serviceDescription}</p>
+            <p><strong>Tutar:</strong> {invoice.amount} TL</p>
+            <p><strong>Oluşturulma Tarihi:</strong> {invoice.createdAt?.toDate().toLocaleString()}</p>
+            <div className="button-group">
+              <button className="download-pdf-button" onClick={generatePDF}>PDF İndir</button>
+              <button className="delete-invoice-button" onClick={deleteInvoice}>Faturayı Sil</button>
+            </div>
+          </div>
+        ) : (
+          <p>Yükleniyor...</p>
+        )}
+      </div>
+    </>
   );
 };
 
-export default InvoiceDetail;
+export default InvoiceDetails;
