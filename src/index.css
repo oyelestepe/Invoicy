@@ -3,36 +3,59 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
+  padding: 15px 20px;
   background-color: #3b82f6;
   color: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-  
-.navbar a {
+
+.navbar-logo {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.navbar-logo a {
   color: white;
   text-decoration: none;
-  font-size: 1rem;
-  margin-right: 20px;
+}
+
+.navbar-links {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 20px;
+}
+
+.navbar-links li {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
   transition: color 0.3s ease;
 }
-  
-.navbar a:hover {
+
+.navbar-links a:hover {
   color: #d1d5db;
 }
-  
-.navbar button {
+
+.logout-button {
   background-color: #ef4444;
   color: white;
   padding: 8px 16px;
   border: none;
   border-radius: 5px;
-  font-size: 1rem;
+  font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
-  
-.navbar button:hover {
+
+.logout-button:hover {
   background-color: #dc2626;
 }
 
