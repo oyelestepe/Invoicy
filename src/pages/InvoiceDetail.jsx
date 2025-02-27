@@ -53,44 +53,85 @@ const InvoiceDetails = () => {
 
   const generatePDF = () => {
     if (!invoice) return;
-
+  
     const doc = new jsPDF();
-
-    doc.setFontSize(22);
-    doc.text('Fatura', 20, 20);
-
+    const margin = 20;
+    const lineHeight = 10;
+    const startX = margin;
+    let currentY = margin;
+  
+    // PDF İçeriği
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FATURA', startX, currentY);
+  
+    currentY += lineHeight * 3;
+  
     doc.setFontSize(14);
-    doc.text(`Müşteri Adı: ${invoice.clientName}`, 20, 40);
-    doc.text(`Müşteri E-mail: ${invoice.clientEmail}`, 20, 50);
-    doc.text(`Hizmet Açıklaması: ${invoice.serviceDescription}`, 20, 60);
-    doc.text(`Tutar: ${invoice.amount} TL`, 20, 70);
-    doc.text(`Oluşturulma Tarihi: ${invoice.createdAt?.toDate().toLocaleString()}`, 20, 80);
-
+    doc.setFont('helvetica', 'bold');
+    doc.text('Müşteri Bilgileri:', startX, currentY);
+  
+    currentY += lineHeight;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Adı: ${invoice.clientName}`, startX, currentY);
+    currentY += lineHeight;
+    doc.text(`E-mail: ${invoice.clientEmail}`, startX, currentY);
+  
+    currentY += lineHeight * 2;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Hizmet Bilgileri:', startX, currentY);
+  
+    currentY += lineHeight;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Açıklama: ${invoice.serviceDescription}`, startX, currentY);
+  
+    currentY += lineHeight;
+    doc.text(`Tutar: ${invoice.amount} ${invoice.currency}`, startX, currentY);
+  
+    currentY += lineHeight;
+    doc.text(`Oluşturulma Tarihi: ${invoice.createdAt?.toDate().toLocaleString()}`, startX, currentY);
+  
+    currentY += lineHeight * 2;
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Toplam Tutar: ${invoice.amount} ${invoice.currency}`, startX, currentY);
+  
+    currentY += lineHeight * 2;
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text('Bu bir dijital faturadır. Islak imza gerekmez.', startX, currentY);
+  
+    // Kenarlıklar ve Çizgiler
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(margin, margin, 210 - margin, margin); 
+    doc.line(margin, currentY + 5, 210 - margin, currentY + 5); 
+  
     doc.save(`fatura-${invoiceId}.pdf`);
   };
+  
 
   return (
     <>
-      <Navbar />
-      <div className="invoice-details-container">
-        <h2>Fatura Detayları</h2>
-        {invoice ? (
-          <div>
-            <p><strong>Müşteri Adı:</strong> {invoice.clientName}</p>
-            <p><strong>Müşteri E-mail:</strong> {invoice.clientEmail}</p>
-            <p><strong>Hizmet Açıklaması:</strong> {invoice.serviceDescription}</p>
-            <p><strong>Tutar:</strong> {invoice.amount} TL</p>
-            <p><strong>Oluşturulma Tarihi:</strong> {invoice.createdAt?.toDate().toLocaleString()}</p>
-            <div className="button-group">
-              <button className="download-pdf-button" onClick={generatePDF}>PDF İndir</button>
-              <button className="delete-invoice-button" onClick={deleteInvoice}>Faturayı Sil</button>
-            </div>
+    <Navbar />
+    <div className="invoice-details-container">
+      <h2>Fatura Detayları</h2>
+      {invoice ? (
+        <div>
+          <p><strong>Müşteri Adı:</strong> {invoice.clientName}</p>
+          <p><strong>Müşteri E-mail:</strong> {invoice.clientEmail}</p>
+          <p><strong>Hizmet Açıklaması:</strong> {invoice.serviceDescription}</p>
+          <p><strong>Tutar:</strong> {invoice.amount} {invoice.currency}</p>
+          <p><strong>Oluşturulma Tarihi:</strong> {invoice.createdAt?.toDate().toLocaleString()}</p>
+          <div className="button-group">
+            <button className="download-pdf-button" onClick={generatePDF}>PDF İndir</button>
+            <button className="delete-invoice-button" onClick={deleteInvoice}>Faturayı Sil</button>
           </div>
-        ) : (
-          <p>Yükleniyor...</p>
-        )}
-      </div>
-    </>
+        </div>
+      ) : (
+        <p>Yükleniyor...</p>
+      )}
+    </div>
+  </>
   );
 };
 
