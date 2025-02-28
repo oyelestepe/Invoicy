@@ -5,6 +5,7 @@ import { db, auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
 import { jsPDF } from 'jspdf';
+import InvoicePreview from '../components/InvoicePreview';
 import './css/invoiceDetails.css'; 
 
 const InvoiceDetails = () => {
@@ -28,24 +29,26 @@ const InvoiceDetails = () => {
     });
   }, [navigate]);
 
-  useEffect(() => {
-    const fetchInvoice = async () => {
-      if (userId && invoiceId) {
-        const docRef = doc(db, 'customers', userId, 'invoices', invoiceId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setInvoice(docSnap.data());
-          setClientName(docSnap.data().clientName);
-          setClientEmail(docSnap.data().clientEmail);
-          setServiceDescription(docSnap.data().serviceDescription);
-          setAmount(docSnap.data().amount);
-        } else {
-          console.log('No such document!');
-        }
+  const fetchInvoice = async () => {
+    if (userId && invoiceId) {
+      const docRef = doc(db, 'customers', userId, 'invoices', invoiceId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setInvoice(docSnap.data());
+        setClientName(docSnap.data().clientName);
+        setClientEmail(docSnap.data().clientEmail);
+        setServiceDescription(docSnap.data().serviceDescription);
+        setAmount(docSnap.data().amount);
+      } else {
+        console.log('Belge bulunamadı!');
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchInvoice();
   }, [userId, invoiceId]);
+  
 
   const updateInvoice = async () => {
     try {
@@ -58,6 +61,8 @@ const InvoiceDetails = () => {
       });
       alert('Fatura başarıyla güncellendi.');
       setIsEditing(false);
+  
+      await fetchInvoice();
     } catch (error) {
       console.error('Fatura güncellenirken hata:', error);
       alert('Fatura güncellenirken bir hata oluştu.');
@@ -183,6 +188,7 @@ const InvoiceDetails = () => {
                   <button onClick={deleteInvoice}>Faturayı Sil</button>
                   <button onClick={() => setIsEditing(true)}>Düzenle</button>
                 </div>
+                <InvoicePreview invoice={invoice} />
               </div>
             )}
           </>
