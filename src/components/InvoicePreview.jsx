@@ -5,7 +5,7 @@ const InvoicePreview = ({ invoice }) => {
   const [pdfUrl, setPdfUrl] = useState('');
 
   useEffect(() => {
-    const generatePdfPreview = () => {
+    const generatePdfPreview = async () => {
       const doc = new jsPDF();
       const margin = 20;
       const lineHeight = 10;
@@ -39,6 +39,11 @@ const InvoicePreview = ({ invoice }) => {
       currentY += lineHeight;
       doc.text(`Tutar: ${invoice.amount || ''} ${invoice.currency || ''}`, startX, currentY);
 
+      if (invoice.discount) {
+        currentY += lineHeight;
+        doc.text(`İndirim: ${invoice.discount || ''}%`, startX, currentY);
+      }
+
       currentY += lineHeight;
       doc.text(
         `Oluşturulma Tarihi: ${
@@ -53,7 +58,7 @@ const InvoicePreview = ({ invoice }) => {
       currentY += lineHeight * 2;
       doc.setFont('helvetica', 'bold');
       doc.text(
-        `Toplam Tutar: ${invoice.amount || ''} ${invoice.currency || ''}`,
+        `Toplam Tutar: ${invoice.finalAmount || ''} ${invoice.currency || ''}`,
         startX,
         currentY
       );
@@ -72,21 +77,42 @@ const InvoicePreview = ({ invoice }) => {
       doc.line(margin, margin, 210 - margin, margin);
       doc.line(margin, currentY + 5, 210 - margin, currentY + 5);
 
-      const pdfBlob = doc.output('blob');
-      const newPdfUrl = URL.createObjectURL(pdfBlob);
+      // Logo ekleme (eğer varsa)
+      if (invoice.logoFile) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const logoImageBytes = new Uint8Array(event.target.result);
+          const logo = await doc.embedJpg(logoImageBytes);
+          doc.addImage(logo, 'JPEG', 450, 750, 100, 50);
 
-      setPdfUrl((prevUrl) => {
-        if (prevUrl) {
-          URL.revokeObjectURL(prevUrl);
-        }
-        return newPdfUrl;
-      });
+          const pdfBlob = doc.output('blob');
+          const newPdfUrl = URL.createObjectURL(pdfBlob);
+
+          setPdfUrl((prevUrl) => {
+            if (prevUrl) {
+              URL.revokeObjectURL(prevUrl);
+            }
+            return newPdfUrl;
+          });
+        };
+        reader.readAsArrayBuffer(invoice.logoFile);
+      } else {
+        const pdfBlob = doc.output('blob');
+        const newPdfUrl = URL.createObjectURL(pdfBlob);
+
+        setPdfUrl((prevUrl) => {
+          if (prevUrl) {
+            URL.revokeObjectURL(prevUrl);
+          }
+          return newPdfUrl;
+        });
+      }
     };
 
     if (invoice) {
       generatePdfPreview();
     }
-  }, [invoice]); // invoice değiştiğinde PDF'yi yeniden oluştur
+  }, [invoice]);
 
   return (
     <div className="invoice-preview">

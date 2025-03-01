@@ -5,7 +5,7 @@ import { db, auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
 import './css/invoiceCreation.css';
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 
 const InvoiceCreation = () => {
   const [clientName, setClientName] = useState('');
@@ -18,7 +18,7 @@ const InvoiceCreation = () => {
   const [taxInfo, setTaxInfo] = useState('');
   const [discount, setDiscount] = useState('');
   const [notes, setNotes] = useState('');
-  const [logoURL, setLogoURL] = useState('');
+  const [logoFile, setLogoFile] = useState(null); // Updated to handle file upload
   const [userId, setUserId] = useState(null);
   const [finalAmount, setFinalAmount] = useState(''); // İndirimli toplam tutar
   const navigate = useNavigate();
@@ -35,22 +35,17 @@ const InvoiceCreation = () => {
 
   // İndirimli Toplam Tutarı Hesapla
   useEffect(() => {
-    if (amount && discount) {
-      const discountedAmount = amount - (amount * (discount / 100));
-      setFinalAmount(discountedAmount.toFixed(2)); // 2 ondalıklı göster
-    } else {
-      setFinalAmount(amount); // İndirim yoksa orijinal tutar
-    }
+    const discountValue = discount ? parseFloat(discount) : 0;
+    const discountedAmount = amount ? amount - (amount * (discountValue / 100)) : amount;
+    setFinalAmount(discountedAmount ? discountedAmount.toFixed(2) : ''); // 2 ondalıklı göster
   }, [amount, discount]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // İndirimli toplam tutarı hesapla
-    let finalAmountCalculated = amount;
-    if (amount && discount) {
-      finalAmountCalculated = amount - (amount * (discount / 100));
-    }
+    const discountValue = discount ? parseFloat(discount) : 0;
+    const finalAmountCalculated = amount ? amount - (amount * (discountValue / 100)) : amount;
 
     try {
       // Firebase'e fatura kaydetme
@@ -63,15 +58,14 @@ const InvoiceCreation = () => {
         invoiceNumber,
         paymentDate,
         taxInfo,
-        discount: parseFloat(discount) || 0,
+        discount: discountValue,
         notes,
-        logoURL,
         createdAt: serverTimestamp(),
-        finalAmount: finalAmountCalculated.toFixed(2), // İndirimli tutar burada kaydediliyor
+        finalAmount: finalAmountCalculated ? finalAmountCalculated.toFixed(2) : '', // İndirimli tutar burada kaydediliyor
       });
 
       // PDF oluşturulması
-      createInvoicePDF({ clientName, clientEmail, serviceDescription, amount, discount, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoURL });
+      createInvoicePDF({ clientName, clientEmail, serviceDescription, amount, discount: discountValue, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoFile });
 
       alert('Fatura başarıyla kaydedildi!');
       navigate('/dashboard');
@@ -82,7 +76,7 @@ const InvoiceCreation = () => {
   };
 
   const createInvoicePDF = async (invoiceData) => {
-    const { clientName, clientEmail, serviceDescription, amount, discount, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoURL } = invoiceData;
+    const { clientName, clientEmail, serviceDescription, amount, discount, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoFile } = invoiceData;
 
     // PDF oluşturuluyor
     const pdfDoc = await PDFDocument.create();
@@ -98,27 +92,47 @@ const InvoiceCreation = () => {
     page.drawText(`Hizmet: ${serviceDescription}`, { x: 50, y: 690, size: 12, font });
     page.drawText(`Vergi Bilgisi: ${taxInfo}`, { x: 50, y: 670, size: 12, font });
     page.drawText(`Ödeme Tarihi: ${paymentDate}`, { x: 50, y: 650, size: 12, font });
-    page.drawText(`Toplam Tutar: ${amount} ${currency}`, { x: 50, y: 630, size: 12, font });
-    page.drawText(`İndirim: ${discount}%`, { x: 50, y: 610, size: 12, font });
-    page.drawText(`İndirimli Tutar: ${finalAmountCalculated.toFixed(2)} ${currency}`, { x: 50, y: 590, size: 12, font });
-    page.drawText(`Notlar: ${notes}`, { x: 50, y: 570, size: 12, font });
+    page.drawText(`Toplam Tutar: ${finalAmountCalculated.toFixed(2)} ${currency}`, { x: 50, y: 630, size: 12, font });
+    if (discount) {
+      page.drawText(`İndirim: ${discount}%`, { x: 50, y: 610, size: 12, font });
+    }
+    page.drawText(`Notlar: ${notes}`, { x: 50, y: 590, size: 12, font });
 
     // Logo ekleme (eğer varsa)
-    if (logoURL) {
-      const logoImage = await fetch(logoURL).then(res => res.blob());
-      const logoImageBytes = await logoImage.arrayBuffer();
-      const logo = await pdfDoc.embedJpg(logoImageBytes);
-      page.drawImage(logo, { x: 450, y: 750, width: 100, height: 50 });
-    }
+    if (logoFile) {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const logoImageBytes = new Uint8Array(event.target.result);
+        const logo = await pdfDoc.embedJpg(logoImageBytes);
+        page.drawImage(logo, { x: 450, y: 750, width: 100, height: 50 });
 
-    // PDF'yi blob olarak kaydetme
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice_${invoiceNumber}.pdf`;
-    link.click();
+        // PDF'yi blob olarak kaydetme
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `invoice_${invoiceNumber}.pdf`;
+        link.click();
+      };
+      reader.readAsArrayBuffer(logoFile);
+    } else {
+      // PDF'yi blob olarak kaydetme
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice_${invoiceNumber}.pdf`;
+      link.click();
+    }
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+    }
   };
 
   return (
@@ -193,10 +207,9 @@ const InvoiceCreation = () => {
             onChange={(e) => setNotes(e.target.value)}
           />
           <input
-            type="text"
-            placeholder="Logo URL"
-            value={logoURL}
-            onChange={(e) => setLogoURL(e.target.value)}
+            type="file"
+            accept="image/*"
+            onChange={handleLogoUpload}
           />
           <button type="submit">Fatura Oluştur</button>
         </form>
