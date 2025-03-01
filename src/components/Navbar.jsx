@@ -25,10 +25,11 @@ const Navbar = () => {
 
   return (
     <nav className="navbar">
-      <h2 className="navbar-logo"><Link to="/">Invoicy</Link></h2>
+      <Link to="/">
+        <img src="/logo.png" alt="Logo" className="navbar-logo" />
+      </Link>      
       <ul className="navbar-links">
-        <li><Link to="/">Anasayfa</Link></li>
-        
+        <li><Link to="/">Anasayfa</Link></li>        
         {isLoggedIn ? (
           <>
             <li><Link to="/dashboard">Dashboard</Link></li>
