@@ -25,6 +25,8 @@ const InvoiceDetails = () => {
   const [notes, setNotes] = useState('');
   const [logoURL, setLogoURL] = useState('');
   const [finalAmount, setFinalAmount] = useState('');
+  const [showSendEmailButton, setShowSendEmailButton] = useState(false); // State to manage the visibility of the "Send Email" button
+  const [pdfBytes, setPdfBytes] = useState(null); // State to store the PDF bytes
 
   const navigate = useNavigate();
 
@@ -57,6 +59,7 @@ const InvoiceDetails = () => {
         setNotes(invoiceData.notes || '');
         setLogoURL(invoiceData.logoURL || 'https://example.com/default-logo.png');
         setFinalAmount(invoiceData.finalAmount || '');
+        setShowSendEmailButton(true); // Show the "Send Email" button
       } else {
         console.log('Belge bulunamadı!');
       }
@@ -112,80 +115,138 @@ const InvoiceDetails = () => {
   const generatePDF = () => {
     if (!invoice) return;
 
-    const doc = new jsPDF();
-    const margin = 20;
-    const lineHeight = 10;
-    const startX = margin;
-    let currentY = margin;
+    try {
+      const doc = new jsPDF();
+      const margin = 20;
+      const lineHeight = 10;
+      const startX = margin;
+      let currentY = margin;
 
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.text('FATURA', startX, currentY);
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text('FATURA', startX, currentY);
 
-    currentY += lineHeight * 3;
+      currentY += lineHeight * 3;
 
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Müşteri Bilgileri:', startX, currentY);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Müşteri Bilgileri:', startX, currentY);
 
-    currentY += lineHeight;
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Adı: ${invoice.clientName}`, startX, currentY);
-    currentY += lineHeight;
-    doc.text(`E-mail: ${invoice.clientEmail}`, startX, currentY);
-
-    currentY += lineHeight * 2;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Hizmet Bilgileri:', startX, currentY);
-
-    currentY += lineHeight;
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Açıklama: ${invoice.serviceDescription}`, startX, currentY);
-
-    currentY += lineHeight;
-    doc.text(`Tutar: ${invoice.amount} ${invoice.currency}`, startX, currentY);
-
-    currentY += lineHeight;
-    doc.text(`Fatura Numarası: ${invoice.invoiceNumber}`, startX, currentY);
-
-    currentY += lineHeight;
-    doc.text(`Ödeme Tarihi: ${invoice.paymentDate}`, startX, currentY);
-
-    currentY += lineHeight;
-    doc.text(`Vergi Bilgileri: ${invoice.taxInfo}`, startX, currentY);
-
-    currentY += lineHeight;
-    doc.text(`İndirim: ${invoice.discount}%`, startX, currentY);
-
-    currentY += lineHeight;
-    doc.text(`İndirimli Tutar: ${invoice.finalAmount} ${invoice.currency}`, startX, currentY);
-
-    currentY += lineHeight;
-    doc.text(`Notlar: ${invoice.notes}`, startX, currentY);
-
-    if (invoice.logoURL) {
       currentY += lineHeight;
-      doc.text(`Logo URL: ${invoice.logoURL}`, startX, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Adı: ${invoice.clientName}`, startX, currentY);
+      currentY += lineHeight;
+      doc.text(`E-mail: ${invoice.clientEmail}`, startX, currentY);
+
+      currentY += lineHeight * 2;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Hizmet Bilgileri:', startX, currentY);
+
+      currentY += lineHeight;
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Açıklama: ${invoice.serviceDescription}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Tutar: ${invoice.amount} ${invoice.currency}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Fatura Numarası: ${invoice.invoiceNumber}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Ödeme Tarihi: ${invoice.paymentDate}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Vergi Bilgileri: ${invoice.taxInfo}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`İndirim: ${invoice.discount}%`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`İndirimli Tutar: ${invoice.finalAmount} ${invoice.currency}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Notlar: ${invoice.notes}`, startX, currentY);
+
+      if (invoice.logoURL) {
+        currentY += lineHeight;
+        doc.text(`Logo URL: ${invoice.logoURL}`, startX, currentY);
+      }
+
+      currentY += lineHeight;
+      doc.text(`Oluşturulma Tarihi: ${invoice.createdAt?.toDate().toLocaleString() || 'Tarih bulunamadı'}`, startX, currentY);
+
+      currentY += lineHeight * 2;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Toplam Tutar: ${invoice.finalAmount} ${invoice.currency}`, startX, currentY);
+
+      currentY += lineHeight * 2;
+      doc.setFontSize(12);
+      doc.setTextColor(100);
+      doc.text('Bu bir dijital faturadır. Islak imza gerekmez.', startX, currentY);
+
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.line(margin, margin, 210 - margin, margin);
+      doc.line(margin, currentY + 5, 210 - margin, currentY + 5);
+
+      const pdfBytes = doc.output('arraybuffer');
+      setPdfBytes(pdfBytes);
+
+      doc.save(`fatura-${invoiceId}.pdf`);
+      console.log('PDF generated successfully on client side.');
+    } catch (error) {
+      console.error('Error generating PDF on client side:', error);
+      alert('PDF generation failed. Please try again.');
+    }
+  };
+
+  const sendInvoiceEmail = async () => {
+    if (!pdfBytes) {
+      alert('PDF generation failed. Please try again.');
+      return;
     }
 
-    currentY += lineHeight;
-    doc.text(`Oluşturulma Tarihi: ${invoice.createdAt?.toDate().toLocaleString() || 'Tarih bulunamadı'}`, startX, currentY);
+    try {
+      const response = await fetch('http://localhost:5000/send-invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientEmail,
+          subject: `Invoice ${invoiceNumber}`,
+          text: `Dear ${clientName},\n\nPlease find attached your invoice.\n\nBest regards,\nYour Company`,
+          invoiceData: {
+            invoiceNumber,
+            clientName,
+            clientEmail,
+            serviceDescription,
+            taxInfo,
+            paymentDate,
+            finalAmount: parseFloat(finalAmount), // Ensure finalAmount is a number
+            currency,
+            discount,
+            notes,
+            logoFile: null, // Set logoFile to null if not defined
+            pdfBytes: pdfBytes ? pdfBytes.toString('base64') : '', // Send PDF bytes as base64 string
+          },
+        }),
+      });
 
-    currentY += lineHeight * 2;
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Toplam Tutar: ${invoice.finalAmount} ${invoice.currency}`, startX, currentY);
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
 
-    currentY += lineHeight * 2;
-    doc.setFontSize(12);
-    doc.setTextColor(100);
-    doc.text('Bu bir dijital faturadır. Islak imza gerekmez.', startX, currentY);
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to send email');
+      }
 
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.5);
-    doc.line(margin, margin, 210 - margin, margin);
-    doc.line(margin, currentY + 5, 210 - margin, currentY + 5);
-
-    doc.save(`fatura-${invoiceId}.pdf`);
+      alert('Email sent successfully!');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('An error occurred while sending the email.');
+    }
   };
 
   return (
@@ -294,6 +355,9 @@ const InvoiceDetails = () => {
                   <button className="edit-button" onClick={() => setIsEditing(true)}>Düzenle</button>
                   <button className="delete-button" onClick={deleteInvoice}>Sil</button>
                   <button className="pdf-button" onClick={generatePDF}>PDF Olarak İndir</button>
+                  {showSendEmailButton && (
+                    <button className="pdf-button" onClick={sendInvoiceEmail}>Send Email</button>
+                  )}
                 </div>
                 <InvoicePreview invoice={invoice} />
               </div>

@@ -5,14 +5,14 @@ import { db, auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
 import './css/invoiceCreation.css';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
 
 const InvoiceCreation = () => {
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [serviceDescription, setServiceDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState('TL'); // Varsayılan olarak TL
+  const [currency, setCurrency] = useState(''); // Allow user to choose any currency
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
   const [taxInfo, setTaxInfo] = useState('');
@@ -20,7 +20,9 @@ const InvoiceCreation = () => {
   const [notes, setNotes] = useState('');
   const [logoFile, setLogoFile] = useState(null); // Updated to handle file upload
   const [userId, setUserId] = useState(null);
-  const [finalAmount, setFinalAmount] = useState(''); // İndirimli toplam tutar
+  const [finalAmount, setFinalAmount] = useState(''); // Discounted total amount
+  const [showSendEmailButton, setShowSendEmailButton] = useState(false); // State to manage the visibility of the "Send Email" button
+  const [pdfBytes, setPdfBytes] = useState(null); // State to store the PDF bytes
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,27 +35,27 @@ const InvoiceCreation = () => {
     });
   }, [navigate]);
 
-  // İndirimli Toplam Tutarı Hesapla
+  // Calculate Discounted Total Amount
   useEffect(() => {
     const discountValue = discount ? parseFloat(discount) : 0;
     const discountedAmount = amount ? amount - (amount * (discountValue / 100)) : amount;
-    setFinalAmount(discountedAmount ? discountedAmount.toFixed(2) : ''); // 2 ondalıklı göster
+    setFinalAmount(discountedAmount ? discountedAmount.toFixed(2) : ''); // Show with 2 decimals
   }, [amount, discount]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // İndirimli toplam tutarı hesapla
+    // Calculate discounted total amount
     const discountValue = discount ? parseFloat(discount) : 0;
     const finalAmountCalculated = amount ? amount - (amount * (discountValue / 100)) : amount;
 
     try {
-      // Firebase'e fatura kaydetme
+      // Save invoice to Firebase
       await addDoc(collection(db, 'customers', userId, 'invoices'), {
         clientName,
         clientEmail,
         serviceDescription,
-        amount: parseFloat(amount) || 0, // Kullanıcının girdiği tutar
+        amount: parseFloat(amount) || 0, // User entered amount
         currency,
         invoiceNumber,
         paymentDate,
@@ -61,70 +63,116 @@ const InvoiceCreation = () => {
         discount: discountValue,
         notes,
         createdAt: serverTimestamp(),
-        finalAmount: finalAmountCalculated ? finalAmountCalculated.toFixed(2) : '', // İndirimli tutar burada kaydediliyor
+        finalAmount: finalAmountCalculated ? finalAmountCalculated.toFixed(2) : '', // Discounted amount saved here
       });
 
-      // PDF oluşturulması
-      createInvoicePDF({ clientName, clientEmail, serviceDescription, amount, discount: discountValue, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoFile });
+      // Create PDF
+      const pdfBytes = await createInvoicePDF({ clientName, clientEmail, serviceDescription, amount, discount: discountValue, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoFile });
+      setPdfBytes(pdfBytes);
 
-      alert('Fatura başarıyla kaydedildi!');
-      navigate('/dashboard');
+      alert('Invoice successfully saved!');
+      setShowSendEmailButton(true); // Show the "Send Email" button
     } catch (error) {
-      console.error('Fatura eklenirken hata:', error);
-      alert('Fatura eklenirken bir hata oluştu.');
+      console.error('Error adding invoice:', error);
+      alert('An error occurred while adding the invoice.');
     }
   };
 
   const createInvoicePDF = async (invoiceData) => {
     const { clientName, clientEmail, serviceDescription, amount, discount, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoFile } = invoiceData;
-
-    // PDF oluşturuluyor
+  
+    // Create PDF
     const pdfDoc = await PDFDocument.create();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  
     const page = pdfDoc.addPage([600, 800]);
-
-    // Font yükleme
-    const font = await pdfDoc.embedFont(PDFDocument.Font.Helvetica);
-
-    // Metin ekleme
-    page.drawText(`Fatura Numarası: ${invoiceNumber}`, { x: 50, y: 750, size: 12, font });
-    page.drawText(`Müşteri Adı: ${clientName}`, { x: 50, y: 730, size: 12, font });
-    page.drawText(`E-posta: ${clientEmail}`, { x: 50, y: 710, size: 12, font });
-    page.drawText(`Hizmet: ${serviceDescription}`, { x: 50, y: 690, size: 12, font });
-    page.drawText(`Vergi Bilgisi: ${taxInfo}`, { x: 50, y: 670, size: 12, font });
-    page.drawText(`Ödeme Tarihi: ${paymentDate}`, { x: 50, y: 650, size: 12, font });
-    page.drawText(`Toplam Tutar: ${finalAmountCalculated.toFixed(2)} ${currency}`, { x: 50, y: 630, size: 12, font });
+  
+    // Add text
+    page.drawText(`Invoice Number: ${invoiceNumber}`, { x: 50, y: 750, size: 12, font });
+    page.drawText(`Client Name: ${clientName}`, { x: 50, y: 730, size: 12, font });
+    page.drawText(`Email: ${clientEmail}`, { x: 50, y: 710, size: 12, font });
+    page.drawText(`Service: ${serviceDescription}`, { x: 50, y: 690, size: 12, font });
+    page.drawText(`Tax Info: ${taxInfo}`, { x: 50, y: 670, size: 12, font });
+    page.drawText(`Payment Date: ${paymentDate}`, { x: 50, y: 650, size: 12, font });
+    page.drawText(`Total Amount: ${finalAmountCalculated.toFixed(2)} ${currency}`, { x: 50, y: 630, size: 12, font });
     if (discount) {
-      page.drawText(`İndirim: ${discount}%`, { x: 50, y: 610, size: 12, font });
+      page.drawText(`Discount: ${discount}%`, { x: 50, y: 610, size: 12, font });
     }
-    page.drawText(`Notlar: ${notes}`, { x: 50, y: 590, size: 12, font });
-
-    // Logo ekleme (eğer varsa)
+    page.drawText(`Notes: ${notes}`, { x: 50, y: 590, size: 12, font });
+  
+    // Add logo (if any)
     if (logoFile) {
       const reader = new FileReader();
-      reader.onload = async (event) => {
-        const logoImageBytes = new Uint8Array(event.target.result);
-        const logo = await pdfDoc.embedJpg(logoImageBytes);
-        page.drawImage(logo, { x: 450, y: 750, width: 100, height: 50 });
-
-        // PDF'yi blob olarak kaydetme
-        const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `invoice_${invoiceNumber}.pdf`;
-        link.click();
-      };
-      reader.readAsArrayBuffer(logoFile);
+      return new Promise((resolve, reject) => {
+        reader.onload = async (event) => {
+          try {
+            const logoImageBytes = new Uint8Array(event.target.result);
+            const logo = await pdfDoc.embedJpg(logoImageBytes);
+            page.drawImage(logo, { x: 450, y: 750, width: 100, height: 50 });
+  
+            // Save PDF as bytes
+            const pdfBytes = await pdfDoc.save();
+            resolve(pdfBytes);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        reader.onerror = (error) => reject(error);
+        reader.readAsArrayBuffer(logoFile);
+      });
     } else {
-      // PDF'yi blob olarak kaydetme
+      // Save PDF as bytes
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `invoice_${invoiceNumber}.pdf`;
-      link.click();
+      return pdfBytes;
+    }
+  };
+
+  const sendInvoiceEmail = async () => {
+    if (!pdfBytes) {
+      alert('PDF generation failed. Please try again.');
+      return;
+    }
+  
+    try {
+      const response = await fetch('http://localhost:5000/send-invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientEmail,
+          subject: `Invoice ${invoiceNumber}`,
+          text: `Dear ${clientName},\n\nPlease find attached your invoice.\n\nBest regards,\nYour Company`,
+          invoiceData: {
+            invoiceNumber,
+            clientName,
+            clientEmail,
+            serviceDescription,
+            taxInfo,
+            paymentDate,
+            finalAmount: parseFloat(finalAmount), // Ensure finalAmount is a number
+            currency,
+            discount,
+            notes,
+            logoFile: null, // Set logoFile to null if not defined
+            pdfBytes: pdfBytes.toString('base64'), // Send PDF bytes as base64 string
+          },
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+  
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to send email');
+      }
+  
+      alert('Email sent successfully!');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('An error occurred while sending the email.');
     }
   };
 
@@ -139,70 +187,72 @@ const InvoiceCreation = () => {
     <>
       <Navbar />
       <div className="invoice-creation-container">
-        <h2>Fatura Oluştur</h2>
+        <h2>Create Invoice</h2>
         <form className="invoice-creation-form" onSubmit={handleSubmit}>
           <input
             type="text"
-            placeholder="Müşteri İsmi"
+            placeholder="Client Name"
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
             required
           />
           <input
             type="email"
-            placeholder="Müşteri E-posta"
+            placeholder="Client Email"
             value={clientEmail}
             onChange={(e) => setClientEmail(e.target.value)}
             required
           />
           <input
             type="text"
-            placeholder="Hizmet Açıklaması"
+            placeholder="Service Description"
             value={serviceDescription}
             onChange={(e) => setServiceDescription(e.target.value)}
             required
           />
           <input
             type="number"
-            placeholder="Tutar"
+            placeholder="Amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
           />
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
-            <option value="TL">TL</option>
-            <option value="USD">USD</option>
-            <option value="Euro">Euro</option>
-          </select>
           <input
             type="text"
-            placeholder="Fatura Numarası"
+            placeholder="Currency"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Invoice Number"
             value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
             required
           />
           <input
             type="date"
-            placeholder="Ödeme Tarihi"
+            placeholder="Payment Date"
             value={paymentDate}
             onChange={(e) => setPaymentDate(e.target.value)}
             required
           />
           <input
             type="text"
-            placeholder="Vergi Bilgileri"
+            placeholder="Tax Info"
             value={taxInfo}
             onChange={(e) => setTaxInfo(e.target.value)}
           />
           <input
             type="number"
-            placeholder="İndirim (%)"
+            placeholder="Discount (%)"
             value={discount}
             onChange={(e) => setDiscount(e.target.value)}
           />
-          <p>Toplam Tutar: {finalAmount} {currency}</p> {/* İndirimli toplam tutar burada gösteriliyor */}
+          <p>Total Amount: {finalAmount} {currency}</p> {/* Discounted total amount shown here */}
           <textarea
-            placeholder="Notlar ve Açıklamalar"
+            placeholder="Notes and Explanations"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
@@ -211,8 +261,11 @@ const InvoiceCreation = () => {
             accept="image/*"
             onChange={handleLogoUpload}
           />
-          <button type="submit">Fatura Oluştur</button>
+          <button type="submit">Create Invoice</button>
         </form>
+        {showSendEmailButton && (
+          <button onClick={sendInvoiceEmail}>Send Email</button>
+        )}
       </div>
     </>
   );

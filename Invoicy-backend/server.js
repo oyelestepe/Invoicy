@@ -27,6 +27,7 @@ app.post('/send-invoice', async (req, res) => {
   }
 
   try {
+    console.log('Starting PDF generation...');
     // Parse finalAmount as a number
     const finalAmount = parseFloat(invoiceData.finalAmount);
     if (isNaN(finalAmount)) {
@@ -34,7 +35,11 @@ app.post('/send-invoice', async (req, res) => {
     }
 
     // Load a font that supports Turkish characters
-    const fontBytes = fs.readFileSync(path.join(__dirname, 'fonts', 'FreeSerif.ttf'));
+    const fontPath = path.join(__dirname, 'fonts', 'FreeSerif.ttf');
+    if (!fs.existsSync(fontPath)) {
+      throw new Error('Font file not found');
+    }
+    const fontBytes = fs.readFileSync(fontPath);
 
     // Create PDF
     const pdfDoc = await PDFDocument.create();
@@ -64,6 +69,8 @@ app.post('/send-invoice', async (req, res) => {
     const pdfBytes = await pdfDoc.save();
     const pdfBuffer = Buffer.from(pdfBytes);
 
+    console.log('PDF generated successfully.');
+
     // Send email with PDF attachment
     let transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -89,6 +96,7 @@ app.post('/send-invoice', async (req, res) => {
       ]
     };
 
+    console.log('Sending email...');
     let info = await transporter.sendMail(mailOptions);
     console.log("E-posta gönderildi: " + info.response);
 
