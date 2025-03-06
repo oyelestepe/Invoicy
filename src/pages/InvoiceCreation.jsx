@@ -5,20 +5,20 @@ import { db, auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
 import './css/invoiceCreation.css';
-import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { jsPDF } from 'jspdf';
 
 const InvoiceCreation = () => {
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [serviceDescription, setServiceDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState(''); // Allow user to choose any currency
+  const [currency, setCurrency] = useState('TL'); // Varsayılan olarak TL
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
   const [taxInfo, setTaxInfo] = useState('');
   const [discount, setDiscount] = useState('');
   const [notes, setNotes] = useState('');
-  const [logoFile, setLogoFile] = useState(null); // Updated to handle file upload
+  const [logoURL, setLogoURL] = useState('');
   const [userId, setUserId] = useState(null);
   const [finalAmount, setFinalAmount] = useState(''); // Discounted total amount
   const [showSendEmailButton, setShowSendEmailButton] = useState(false); // State to manage the visibility of the "Send Email" button
@@ -67,7 +67,7 @@ const InvoiceCreation = () => {
       });
 
       // Create PDF
-      const pdfBytes = await createInvoicePDF({ clientName, clientEmail, serviceDescription, amount, discount: discountValue, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoFile });
+      const pdfBytes = await createInvoicePDF({ clientName, clientEmail, serviceDescription, amount, discount: discountValue, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoURL });
       setPdfBytes(pdfBytes);
 
       alert('Invoice successfully saved!');
@@ -79,51 +79,90 @@ const InvoiceCreation = () => {
   };
 
   const createInvoicePDF = async (invoiceData) => {
-    const { clientName, clientEmail, serviceDescription, amount, discount, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoFile } = invoiceData;
-  
-    // Create PDF
-    const pdfDoc = await PDFDocument.create();
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  
-    const page = pdfDoc.addPage([600, 800]);
-  
-    // Add text
-    page.drawText(`Invoice Number: ${invoiceNumber}`, { x: 50, y: 750, size: 12, font });
-    page.drawText(`Client Name: ${clientName}`, { x: 50, y: 730, size: 12, font });
-    page.drawText(`Email: ${clientEmail}`, { x: 50, y: 710, size: 12, font });
-    page.drawText(`Service: ${serviceDescription}`, { x: 50, y: 690, size: 12, font });
-    page.drawText(`Tax Info: ${taxInfo}`, { x: 50, y: 670, size: 12, font });
-    page.drawText(`Payment Date: ${paymentDate}`, { x: 50, y: 650, size: 12, font });
-    page.drawText(`Total Amount: ${finalAmountCalculated.toFixed(2)} ${currency}`, { x: 50, y: 630, size: 12, font });
-    if (discount) {
-      page.drawText(`Discount: ${discount}%`, { x: 50, y: 610, size: 12, font });
-    }
-    page.drawText(`Notes: ${notes}`, { x: 50, y: 590, size: 12, font });
-  
-    // Add logo (if any)
-    if (logoFile) {
-      const reader = new FileReader();
-      return new Promise((resolve, reject) => {
-        reader.onload = async (event) => {
-          try {
-            const logoImageBytes = new Uint8Array(event.target.result);
-            const logo = await pdfDoc.embedJpg(logoImageBytes);
-            page.drawImage(logo, { x: 450, y: 750, width: 100, height: 50 });
-  
-            // Save PDF as bytes
-            const pdfBytes = await pdfDoc.save();
-            resolve(pdfBytes);
-          } catch (error) {
-            reject(error);
-          }
-        };
-        reader.onerror = (error) => reject(error);
-        reader.readAsArrayBuffer(logoFile);
-      });
-    } else {
-      // Save PDF as bytes
-      const pdfBytes = await pdfDoc.save();
-      return pdfBytes;
+    const { clientName, clientEmail, serviceDescription, amount, discount, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoURL } = invoiceData;
+
+    try {
+      const doc = new jsPDF();
+      const margin = 20;
+      const lineHeight = 10;
+      const startX = margin;
+      let currentY = margin;
+
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text('FATURA', startX, currentY);
+
+      currentY += lineHeight * 3;
+
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Müşteri Bilgileri:', startX, currentY);
+
+      currentY += lineHeight;
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Adı: ${clientName}`, startX, currentY);
+      currentY += lineHeight;
+      doc.text(`E-mail: ${clientEmail}`, startX, currentY);
+
+      currentY += lineHeight * 2;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Hizmet Bilgileri:', startX, currentY);
+
+      currentY += lineHeight;
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Açıklama: ${serviceDescription}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Tutar: ${amount} ${currency}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Fatura Numarası: ${invoiceNumber}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Ödeme Tarihi: ${paymentDate}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Vergi Bilgileri: ${taxInfo}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`İndirim: ${discount}%`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`İndirimli Tutar: ${finalAmountCalculated} ${currency}`, startX, currentY);
+
+      currentY += lineHeight;
+      doc.text(`Notlar: ${notes}`, startX, currentY);
+
+      if (logoURL) {
+        currentY += lineHeight;
+        doc.text(`Logo URL: ${logoURL}`, startX, currentY);
+      }
+
+      currentY += lineHeight;
+      doc.text(`Oluşturulma Tarihi: ${new Date().toLocaleString()}`, startX, currentY);
+
+      currentY += lineHeight * 2;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Toplam Tutar: ${finalAmountCalculated} ${currency}`, startX, currentY);
+
+      currentY += lineHeight * 2;
+      doc.setFontSize(12);
+      doc.setTextColor(100);
+      doc.text('Bu bir dijital faturadır. Islak imza gerekmez.', startX, currentY);
+
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.line(margin, margin, 210 - margin, margin);
+      doc.line(margin, currentY + 5, 210 - margin, currentY + 5);
+
+      const pdfBytes = doc.output('arraybuffer');
+      setPdfBytes(pdfBytes);
+
+      doc.save(`fatura-${invoiceNumber}.pdf`);
+      console.log('PDF generated successfully on client side.');
+    } catch (error) {
+      console.error('Error generating PDF on client side:', error);
+      alert('PDF generation failed. Please try again.');
     }
   };
 
@@ -132,7 +171,7 @@ const InvoiceCreation = () => {
       alert('PDF generation failed. Please try again.');
       return;
     }
-  
+
     try {
       const response = await fetch('http://localhost:5000/send-invoice', {
         method: 'POST',
@@ -155,20 +194,20 @@ const InvoiceCreation = () => {
             discount,
             notes,
             logoFile: null, // Set logoFile to null if not defined
-            pdfBytes: pdfBytes.toString('base64'), // Send PDF bytes as base64 string
+            pdfBytes: pdfBytes ? pdfBytes.toString('base64') : '', // Send PDF bytes as base64 string
           },
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to send email');
       }
-  
+
       const data = await response.json();
       if (!data.success) {
         throw new Error(data.message || 'Failed to send email');
       }
-  
+
       alert('Email sent successfully!');
     } catch (error) {
       console.error('Error sending email:', error);
@@ -176,92 +215,84 @@ const InvoiceCreation = () => {
     }
   };
 
-  const handleLogoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setLogoFile(file);
-    }
-  };
-
   return (
     <>
       <Navbar />
       <div className="invoice-creation-container">
-        <h2>Create Invoice</h2>
+        <h2>Fatura Oluştur</h2>
         <form className="invoice-creation-form" onSubmit={handleSubmit}>
           <input
             type="text"
-            placeholder="Client Name"
+            placeholder="Müşteri İsmi"
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
             required
           />
           <input
             type="email"
-            placeholder="Client Email"
+            placeholder="Müşteri E-posta"
             value={clientEmail}
             onChange={(e) => setClientEmail(e.target.value)}
             required
           />
           <input
             type="text"
-            placeholder="Service Description"
+            placeholder="Hizmet Açıklaması"
             value={serviceDescription}
             onChange={(e) => setServiceDescription(e.target.value)}
             required
           />
           <input
             type="number"
-            placeholder="Amount"
+            placeholder="Tutar"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
           />
+          <select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
+            <option value="TL">TL</option>
+            <option value="USD">USD</option>
+            <option value="Euro">Euro</option>
+          </select>
           <input
             type="text"
-            placeholder="Currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Invoice Number"
+            placeholder="Fatura Numarası"
             value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
             required
           />
           <input
             type="date"
-            placeholder="Payment Date"
+            placeholder="Ödeme Tarihi"
             value={paymentDate}
             onChange={(e) => setPaymentDate(e.target.value)}
             required
           />
           <input
             type="text"
-            placeholder="Tax Info"
+            placeholder="Vergi Bilgileri"
             value={taxInfo}
             onChange={(e) => setTaxInfo(e.target.value)}
           />
           <input
             type="number"
-            placeholder="Discount (%)"
+            placeholder="İndirim (%)"
             value={discount}
             onChange={(e) => setDiscount(e.target.value)}
           />
           <p>Total Amount: {finalAmount} {currency}</p> {/* Discounted total amount shown here */}
           <textarea
-            placeholder="Notes and Explanations"
+            placeholder="Notlar ve Açıklamalar"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
           <input
-            type="file"
-            accept="image/*"
-            onChange={handleLogoUpload}
+            type="text"
+            placeholder="Logo URL"
+            value={logoURL}
+            onChange={(e) => setLogoURL(e.target.value)}
           />
-          <button type="submit">Create Invoice</button>
+          <button type="submit">Fatura Oluştur</button>
         </form>
         {showSendEmailButton && (
           <button onClick={sendInvoiceEmail}>Send Email</button>

@@ -60,6 +60,7 @@ const InvoiceDetails = () => {
         setLogoURL(invoiceData.logoURL || 'https://example.com/default-logo.png');
         setFinalAmount(invoiceData.finalAmount || '');
         setShowSendEmailButton(true); // Show the "Send Email" button
+        generatePDF(invoiceData); // Generate PDF when fetching invoice
       } else {
         console.log('Belge bulunamadı!');
       }
@@ -112,8 +113,8 @@ const InvoiceDetails = () => {
     }
   };
 
-  const generatePDF = () => {
-    if (!invoice) return;
+  const generatePDF = async (invoiceData) => {
+    if (!invoiceData) return;
 
     try {
       const doc = new jsPDF();
@@ -134,9 +135,9 @@ const InvoiceDetails = () => {
 
       currentY += lineHeight;
       doc.setFont('helvetica', 'normal');
-      doc.text(`Adı: ${invoice.clientName}`, startX, currentY);
+      doc.text(`Adı: ${invoiceData.clientName}`, startX, currentY);
       currentY += lineHeight;
-      doc.text(`E-mail: ${invoice.clientEmail}`, startX, currentY);
+      doc.text(`E-mail: ${invoiceData.clientEmail}`, startX, currentY);
 
       currentY += lineHeight * 2;
       doc.setFont('helvetica', 'bold');
@@ -144,40 +145,40 @@ const InvoiceDetails = () => {
 
       currentY += lineHeight;
       doc.setFont('helvetica', 'normal');
-      doc.text(`Açıklama: ${invoice.serviceDescription}`, startX, currentY);
+      doc.text(`Açıklama: ${invoiceData.serviceDescription}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Tutar: ${invoice.amount} ${invoice.currency}`, startX, currentY);
+      doc.text(`Tutar: ${invoiceData.amount} ${invoiceData.currency}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Fatura Numarası: ${invoice.invoiceNumber}`, startX, currentY);
+      doc.text(`Fatura Numarası: ${invoiceData.invoiceNumber}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Ödeme Tarihi: ${invoice.paymentDate}`, startX, currentY);
+      doc.text(`Ödeme Tarihi: ${invoiceData.paymentDate}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Vergi Bilgileri: ${invoice.taxInfo}`, startX, currentY);
+      doc.text(`Vergi Bilgileri: ${invoiceData.taxInfo}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`İndirim: ${invoice.discount}%`, startX, currentY);
+      doc.text(`İndirim: ${invoiceData.discount}%`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`İndirimli Tutar: ${invoice.finalAmount} ${invoice.currency}`, startX, currentY);
+      doc.text(`İndirimli Tutar: ${invoiceData.finalAmount} ${invoiceData.currency}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Notlar: ${invoice.notes}`, startX, currentY);
+      doc.text(`Notlar: ${invoiceData.notes}`, startX, currentY);
 
-      if (invoice.logoURL) {
+      if (invoiceData.logoURL) {
         currentY += lineHeight;
-        doc.text(`Logo URL: ${invoice.logoURL}`, startX, currentY);
+        doc.text(`Logo URL: ${invoiceData.logoURL}`, startX, currentY);
       }
 
       currentY += lineHeight;
-      doc.text(`Oluşturulma Tarihi: ${invoice.createdAt?.toDate().toLocaleString() || 'Tarih bulunamadı'}`, startX, currentY);
+      doc.text(`Oluşturulma Tarihi: ${invoiceData.createdAt?.toDate().toLocaleString() || 'Tarih bulunamadı'}`, startX, currentY);
 
       currentY += lineHeight * 2;
       doc.setFont('helvetica', 'bold');
-      doc.text(`Toplam Tutar: ${invoice.finalAmount} ${invoice.currency}`, startX, currentY);
+      doc.text(`Toplam Tutar: ${invoiceData.finalAmount} ${invoiceData.currency}`, startX, currentY);
 
       currentY += lineHeight * 2;
       doc.setFontSize(12);
@@ -228,7 +229,7 @@ const InvoiceDetails = () => {
             discount,
             notes,
             logoFile: null, // Set logoFile to null if not defined
-            pdfBytes: pdfBytes ? pdfBytes.toString('base64') : '', // Send PDF bytes as base64 string
+            pdfBytes: pdfBytes ? btoa(String.fromCharCode(...new Uint8Array(pdfBytes))) : '', // Send PDF bytes as base64 string
           },
         }),
       });
@@ -354,7 +355,7 @@ const InvoiceDetails = () => {
                 <div className="button-group">
                   <button className="edit-button" onClick={() => setIsEditing(true)}>Düzenle</button>
                   <button className="delete-button" onClick={deleteInvoice}>Sil</button>
-                  <button className="pdf-button" onClick={generatePDF}>PDF Olarak İndir</button>
+                  <button className="pdf-button" onClick={() => generatePDF(invoice)}>PDF Olarak İndir</button>
                   {showSendEmailButton && (
                     <button className="pdf-button" onClick={sendInvoiceEmail}>Send Email</button>
                   )}
