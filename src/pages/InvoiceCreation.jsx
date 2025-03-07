@@ -51,7 +51,7 @@ const InvoiceCreation = () => {
 
     try {
       // Save invoice to Firebase
-      await addDoc(collection(db, 'customers', userId, 'invoices'), {
+      const docRef = await addDoc(collection(db, 'customers', userId, 'invoices'), {
         clientName,
         clientEmail,
         serviceDescription,
@@ -72,6 +72,9 @@ const InvoiceCreation = () => {
 
       alert('Invoice successfully saved!');
       setShowSendEmailButton(true); // Show the "Send Email" button
+
+      // Redirect to invoice details page
+      navigate(`/invoice/${docRef.id}`);
     } catch (error) {
       console.error('Error adding invoice:', error);
       alert('An error occurred while adding the invoice.');
@@ -158,11 +161,12 @@ const InvoiceCreation = () => {
       const pdfBytes = doc.output('arraybuffer');
       setPdfBytes(pdfBytes);
 
-      doc.save(`fatura-${invoiceNumber}.pdf`);
       console.log('PDF generated successfully on client side.');
+      return pdfBytes;
     } catch (error) {
       console.error('Error generating PDF on client side:', error);
       alert('PDF generation failed. Please try again.');
+      return null;
     }
   };
 
@@ -194,7 +198,7 @@ const InvoiceCreation = () => {
             discount,
             notes,
             logoFile: null, // Set logoFile to null if not defined
-            pdfBytes: pdfBytes ? pdfBytes.toString('base64') : '', // Send PDF bytes as base64 string
+            pdfBytes: pdfBytes ? btoa(String.fromCharCode(...new Uint8Array(pdfBytes))) : '', // Send PDF bytes as base64 string
           },
         }),
       });
