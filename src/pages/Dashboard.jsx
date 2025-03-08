@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, onSnapshot, limit, startAfter } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, limit, startAfter, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
+import { FaTrash } from 'react-icons/fa';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
 import './css/dashboard.css';
 
 const Dashboard = () => {
@@ -12,6 +14,8 @@ const Dashboard = () => {
   const [lastVisible, setLastVisible] = useState(null);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const pageSize = 15;
@@ -44,27 +48,31 @@ const Dashboard = () => {
       limit(pageSize)
     );
 
-    if (currentPage > 1 && lastVisible) {
+    if (currentPage > 1) {
+      const previousPageQuery = query(
+        collection(db, 'customers', userId, 'invoices'),
+        orderBy('createdAt', 'desc'),
+        limit((currentPage - 1) * pageSize)
+      );
+      const previousPageSnapshot = await getDocs(previousPageQuery);
+      const lastDoc = previousPageSnapshot.docs[previousPageSnapshot.docs.length - 1];
       q = query(
         collection(db, 'customers', userId, 'invoices'),
         orderBy('createdAt', 'desc'),
-        startAfter(lastVisible),
+        startAfter(lastDoc),
         limit(pageSize)
       );
     }
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const invoiceData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setInvoices(invoiceData);
-      setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
-      setHasMore(snapshot.docs.length === pageSize);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    const snapshot = await getDocs(q);
+    const invoiceData = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    setInvoices(invoiceData);
+    setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+    setHasMore(snapshot.docs.length === pageSize);
+    setLoading(false);
   };
 
   const handleNextPage = () => {
@@ -79,6 +87,35 @@ const Dashboard = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (selectedInvoiceId) {
+      try {
+        await deleteDoc(doc(db, 'customers', userId, 'invoices', selectedInvoiceId));
+        setOpen(false);
+        setSelectedInvoiceId(null);
+        // Refresh the invoice list
+        if (invoices.length === 1 && currentPage > 1) {
+          navigate(`?page=${currentPage - 1}`);
+        } else {
+          fetchInvoices();
+        }
+      } catch (error) {
+        console.error('Fatura silinirken hata:', error);
+        alert('Fatura silinirken bir hata oluştu.');
+      }
+    }
+  };
+
+  const handleClickOpen = (invoiceId) => {
+    setSelectedInvoiceId(invoiceId);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedInvoiceId(null);
+  };
+
   return (
     <>
       <Navbar />
@@ -90,9 +127,14 @@ const Dashboard = () => {
         <ul className="invoice-list">
           {invoices.map(invoice => (
             <li key={invoice.id} className="invoice-item">
-              <strong>{invoice.clientName}</strong> - {invoice.amount} {invoice.currency}
-              <br />
-              <a href={`/invoice/${invoice.id}`}>Detaylar ve PDF İndir</a>
+              <div className="invoice-info">
+                <strong>{invoice.clientName}</strong> - {invoice.amount} {invoice.currency}
+                <br />
+                <a href={`/invoice/${invoice.id}`}>Detaylar ve PDF İndir</a>
+              </div>
+              <button onClick={() => handleClickOpen(invoice.id)} className="delete-button">
+                <FaTrash />
+              </button>
             </li>
           ))}
         </ul>
@@ -102,6 +144,28 @@ const Dashboard = () => {
           <button onClick={handleNextPage} disabled={!hasMore}>Next</button>
         </div>
       </div>
+
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Delete Invoice"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+          Are you sure you want to delete this invoice?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDelete} color="primary" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

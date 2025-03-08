@@ -35,6 +35,9 @@ h2 {
 }
 
 .invoice-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: #f9fafb;
   padding: 1.25rem;
   margin-bottom: 0.75rem;
@@ -69,6 +72,24 @@ h2 {
 .invoice-item a:hover {
   color: #2563eb;
   text-decoration: underline;
+}
+
+.delete-button {
+  background-color: #ef4444;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-button:hover {
+  background-color: #dc2626;
 }
 
 .pagination-buttons {
