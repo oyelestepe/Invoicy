@@ -12,7 +12,7 @@ const InvoiceCreation = () => {
   const [clientEmail, setClientEmail] = useState('');
   const [serviceDescription, setServiceDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState('TL'); // Varsayılan olarak TL
+  const [currency, setCurrency] = useState(''); // Allow user to type any currency
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
   const [taxInfo, setTaxInfo] = useState('');
@@ -253,11 +253,13 @@ const InvoiceCreation = () => {
             onChange={(e) => setAmount(e.target.value)}
             required
           />
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
-            <option value="TL">TL</option>
-            <option value="USD">USD</option>
-            <option value="Euro">Euro</option>
-          </select>
+          <input
+            type="text"
+            placeholder="Para Birimi"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            required
+          />
           <input
             type="text"
             placeholder="Fatura Numarası"
