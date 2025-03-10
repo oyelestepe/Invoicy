@@ -16,6 +16,8 @@ const Dashboard = () => {
   const [hasMore, setHasMore] = useState(true);
   const [open, setOpen] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
   const pageSize = 15;
@@ -93,6 +95,8 @@ const Dashboard = () => {
         await deleteDoc(doc(db, 'customers', userId, 'invoices', selectedInvoiceId));
         setOpen(false);
         setSelectedInvoiceId(null);
+        setModalMessage('Invoice deleted successfully.');
+        setModalOpen(true);
         // Refresh the invoice list
         if (invoices.length === 1 && currentPage > 1) {
           navigate(`?page=${currentPage - 1}`);
@@ -100,8 +104,9 @@ const Dashboard = () => {
           fetchInvoices();
         }
       } catch (error) {
-        console.error('Fatura silinirken hata:', error);
-        alert('Fatura silinirken bir hata oluştu.');
+        console.error('Error deleting invoice:', error);
+        setModalMessage('An error occurred while deleting the invoice.');
+        setModalOpen(true);
       }
     }
   };
@@ -123,14 +128,14 @@ const Dashboard = () => {
         <div className="dashboard-header">
           <h1>Dashboard</h1>
         </div>
-        <h2>Fatura Listesi</h2>
+        <h2>Invoice List</h2>
         <ul className="invoice-list">
           {invoices.map(invoice => (
             <li key={invoice.id} className="invoice-item">
               <div className="invoice-info">
                 <strong>{invoice.clientName}</strong> - {invoice.amount} {invoice.currency}
                 <br />
-                <a href={`/invoice/${invoice.id}`}>Detaylar ve PDF İndir</a>
+                <a href={`/invoice/${invoice.id}`}>Details and Download PDF</a>
               </div>
               <button onClick={() => handleClickOpen(invoice.id)} className="delete-button">
                 <FaTrash />
@@ -154,7 +159,7 @@ const Dashboard = () => {
         <DialogTitle id="alert-dialog-title">{"Delete Invoice"}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-          Are you sure you want to delete this invoice?
+            Are you sure you want to delete this invoice?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -163,6 +168,25 @@ const Dashboard = () => {
           </Button>
           <Button onClick={handleDelete} color="primary" autoFocus>
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Notification"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {modalMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setModalOpen(false)} color="primary">
+            OK
           </Button>
         </DialogActions>
       </Dialog>

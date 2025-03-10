@@ -6,7 +6,11 @@ import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
 import { jsPDF } from 'jspdf';
 import InvoicePreview from '../components/InvoicePreview';
-import './css/invoiceDetails.css'; // CSS dosyasını import et
+import './css/invoiceDetails.css'; // Import CSS
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
+
+// Base64 encoded FreeSerif font
+const FreeSerifBase64 = '...'; // Add the Base64 encoded string here
 
 const InvoiceDetails = () => {
   const { invoiceId } = useParams();
@@ -27,6 +31,9 @@ const InvoiceDetails = () => {
   const [finalAmount, setFinalAmount] = useState('');
   const [showSendEmailButton, setShowSendEmailButton] = useState(false); // State to manage the visibility of the "Send Email" button
   const [pdfBytes, setPdfBytes] = useState(null); // State to store the PDF bytes
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -52,17 +59,17 @@ const InvoiceDetails = () => {
         setServiceDescription(invoiceData.serviceDescription || '');
         setAmount(invoiceData.amount || '');
         setCurrency(invoiceData.currency || '');
-        setInvoiceNumber(invoiceData.invoiceNumber || 'Bilinmiyor');
+        setInvoiceNumber(invoiceData.invoiceNumber || 'Unknown');
         setPaymentDate(invoiceData.paymentDate || '');
-        setTaxInfo(invoiceData.taxInfo || 'Bilinmiyor');
+        setTaxInfo(invoiceData.taxInfo || 'Unknown');
         setDiscount(invoiceData.discount || '');
         setNotes(invoiceData.notes || '');
-        setLogoURL(invoiceData.logoURL || 'https://example.com/default-logo.png');
+        setLogoURL(invoiceData.logoURL || '');
         setFinalAmount(invoiceData.finalAmount || '');
         setShowSendEmailButton(true); // Show the "Send Email" button
         generatePDF(invoiceData); // Generate PDF when fetching invoice
       } else {
-        console.log('Belge bulunamadı!');
+        console.log('Document not found!');
       }
     }
   };
@@ -89,27 +96,28 @@ const InvoiceDetails = () => {
         logoURL,
         finalAmount: finalAmountCalculated.toFixed(2),
       });
-      alert('Fatura başarıyla güncellendi.');
+      setModalMessage('Invoice updated successfully.');
+      setModalOpen(true);
       setIsEditing(false);
       await fetchInvoice();
     } catch (error) {
-      console.error('Fatura güncellenirken hata:', error);
-      alert('Fatura güncellenirken bir hata oluştu.');
+      console.error('Error updating invoice:', error);
+      setModalMessage('An error occurred while updating the invoice.');
+      setModalOpen(true);
     }
   };
 
   const deleteInvoice = async () => {
-    const confirmDelete = window.confirm('Bu faturayı silmek istediğinizden emin misiniz?');
-    if (confirmDelete) {
-      try {
-        const docRef = doc(db, 'customers', userId, 'invoices', invoiceId);
-        await deleteDoc(docRef);
-        alert('Fatura başarıyla silindi.');
-        navigate('/dashboard');
-      } catch (error) {
-        console.error('Fatura silinirken hata:', error);
-        alert('Fatura silinirken bir hata oluştu.');
-      }
+    try {
+      const docRef = doc(db, 'customers', userId, 'invoices', invoiceId);
+      await deleteDoc(docRef);
+      setModalMessage('Invoice deleted successfully.');
+      setModalOpen(true);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      setModalMessage('An error occurred while deleting the invoice.');
+      setModalOpen(true);
     }
   };
 
@@ -118,72 +126,84 @@ const InvoiceDetails = () => {
 
     try {
       const doc = new jsPDF();
+      doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
+      doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
+      doc.setFont('FreeSerif');
+
       const margin = 20;
       const lineHeight = 10;
       const startX = margin;
       let currentY = margin;
 
+      // Add the logo to the PDF if it exists
+      if (invoiceData.logoURL) {
+        const logo = await fetch(invoiceData.logoURL).then(res => res.blob()).then(blob => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        });
+        doc.addImage(logo, 'PNG', 150, 10, 50, 20);
+      }
+
       doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.text('FATURA', startX, currentY);
+      doc.setFont('FreeSerif', 'bold');
+      doc.text('INVOICE', startX, currentY);
 
       currentY += lineHeight * 3;
 
       doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Müşteri Bilgileri:', startX, currentY);
+      doc.setFont('FreeSerif', 'bold');
+      doc.text('Customer Information:', startX, currentY);
 
       currentY += lineHeight;
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Adı: ${invoiceData.clientName}`, startX, currentY);
+      doc.setFont('FreeSerif', 'normal');
+      doc.text(`Name: ${invoiceData.clientName}`, startX, currentY);
       currentY += lineHeight;
-      doc.text(`E-mail: ${invoiceData.clientEmail}`, startX, currentY);
+      doc.text(`Email: ${invoiceData.clientEmail}`, startX, currentY);
 
       currentY += lineHeight * 2;
-      doc.setFont('helvetica', 'bold');
-      doc.text('Hizmet Bilgileri:', startX, currentY);
+      doc.setFont('FreeSerif', 'bold');
+      doc.text('Service Information:', startX, currentY);
 
       currentY += lineHeight;
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Açıklama: ${invoiceData.serviceDescription}`, startX, currentY);
+      doc.setFont('FreeSerif', 'normal');
+      doc.text(`Description: ${invoiceData.serviceDescription}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Tutar: ${invoiceData.amount} ${invoiceData.currency}`, startX, currentY);
+      doc.text(`Amount: ${invoiceData.amount} ${invoiceData.currency}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Fatura Numarası: ${invoiceData.invoiceNumber}`, startX, currentY);
+      doc.text(`Invoice Number: ${invoiceData.invoiceNumber}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Ödeme Tarihi: ${invoiceData.paymentDate}`, startX, currentY);
+      doc.text(`Payment Date: ${invoiceData.paymentDate}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Vergi Bilgileri: ${invoiceData.taxInfo}`, startX, currentY);
+      doc.text(`Tax Information: ${invoiceData.taxInfo}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`İndirim: ${invoiceData.discount}%`, startX, currentY);
+      doc.text(`Discount: ${invoiceData.discount}%`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`İndirimli Tutar: ${invoiceData.finalAmount} ${invoiceData.currency}`, startX, currentY);
+      doc.text(`Discounted Amount: ${invoiceData.finalAmount} ${invoiceData.currency}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Notlar: ${invoiceData.notes}`, startX, currentY);
-
-      if (invoiceData.logoURL) {
-        currentY += lineHeight;
-        doc.text(`Logo URL: ${invoiceData.logoURL}`, startX, currentY);
-      }
+      doc.text(`Notes: ${invoiceData.notes}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Oluşturulma Tarihi: ${invoiceData.createdAt?.toDate().toLocaleString() || 'Tarih bulunamadı'}`, startX, currentY);
+      doc.text(`Creation Date: ${invoiceData.createdAt?.toDate().toLocaleString() || 'Date not found'}`, startX, currentY);
 
       currentY += lineHeight * 2;
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Toplam Tutar: ${invoiceData.finalAmount} ${invoiceData.currency}`, startX, currentY);
+      doc.setFont('FreeSerif', 'bold');
+      doc.text(`Total Amount: ${invoiceData.finalAmount} ${invoiceData.currency}`, startX, currentY);
 
       currentY += lineHeight * 2;
       doc.setFontSize(12);
       doc.setTextColor(100);
-      doc.text('Bu bir dijital faturadır. Islak imza gerekmez.', startX, currentY);
+      doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
 
       doc.setDrawColor(0);
       doc.setLineWidth(0.5);
@@ -193,21 +213,24 @@ const InvoiceDetails = () => {
       const pdfBytes = doc.output('arraybuffer');
       setPdfBytes(pdfBytes);
 
-      doc.save(`fatura-${invoiceId}.pdf`);
+      doc.save(`invoice-${invoiceId}.pdf`);
       console.log('PDF generated successfully on client side.');
     } catch (error) {
       console.error('Error generating PDF on client side:', error);
-      alert('PDF generation failed. Please try again.');
+      setModalMessage('PDF generation failed. Please try again.');
+      setModalOpen(true);
     }
   };
 
   const sendInvoiceEmail = async () => {
     if (!pdfBytes) {
-      alert('PDF generation failed. Please try again.');
+      setModalMessage('PDF generation failed. Please try again.');
+      setModalOpen(true);
       return;
     }
 
     try {
+      console.log('Sending email...');
       const response = await fetch('http://localhost:5000/send-invoice', {
         method: 'POST',
         headers: {
@@ -243,10 +266,12 @@ const InvoiceDetails = () => {
         throw new Error(data.message || 'Failed to send email');
       }
 
-      alert('Email sent successfully!');
+      setModalMessage('Email sent successfully!');
+      setModalOpen(true);
     } catch (error) {
       console.error('Error sending email:', error);
-      alert('An error occurred while sending the email.');
+      setModalMessage('An error occurred while sending the email.');
+      setModalOpen(true);
     }
   };
 
@@ -254,76 +279,76 @@ const InvoiceDetails = () => {
     <>
       <Navbar />
       <div className="invoice-details-container">
-        <h2>Fatura Detayları</h2>
+        <h2>Invoice Details</h2>
         {invoice ? (
           <>
             {isEditing ? (
               <div>
                 <input
                   type="text"
-                  placeholder="Müşteri İsmi"
+                  placeholder="Customer Name"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   required
                 />
                 <input
                   type="email"
-                  placeholder="Müşteri E-posta"
+                  placeholder="Customer Email"
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
                   required
                 />
                 <input
                   type="text"
-                  placeholder="Hizmet Açıklaması"
+                  placeholder="Service Description"
                   value={serviceDescription}
                   onChange={(e) => setServiceDescription(e.target.value)}
                   required
                 />
                 <input
                   type="number"
-                  placeholder="Tutar"
+                  placeholder="Amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
                 />
                 <input
                   type="text"
-                  placeholder="Para Birimi"
+                  placeholder="Currency"
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                   required
                 />
                 <input
                   type="text"
-                  placeholder="Fatura Numarası"
+                  placeholder="Invoice Number"
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
                   required
                 />
                 <input
                   type="date"
-                  placeholder="Ödeme Tarihi"
+                  placeholder="Payment Date"
                   value={paymentDate}
                   onChange={(e) => setPaymentDate(e.target.value)}
                   required
                 />
                 <input
                   type="text"
-                  placeholder="Vergi Bilgileri"
+                  placeholder="Tax Information"
                   value={taxInfo}
                   onChange={(e) => setTaxInfo(e.target.value)}
                   required
                 />
                 <input
                   type="number"
-                  placeholder="İndirim (%)"
+                  placeholder="Discount (%)"
                   value={discount}
                   onChange={(e) => setDiscount(e.target.value)}
                   required
                 />
                 <textarea
-                  placeholder="Notlar ve Açıklamalar"
+                  placeholder="Notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   required
@@ -336,28 +361,28 @@ const InvoiceDetails = () => {
                   required
                 />
                 <div className="button-group">
-                  <button className="edit-button" onClick={updateInvoice}>Kaydet</button>
-                  <button className="cancel-button" onClick={() => setIsEditing(false)}>Vazgeç</button>
+                  <button className="edit-button" onClick={updateInvoice}>Save</button>
+                  <button className="cancel-button" onClick={() => setIsEditing(false)}>Cancel</button>
                 </div>
               </div>
             ) : (
               <div>
-                <p><strong>Müşteri Adı:</strong> {invoice.clientName}</p>
-                <p><strong>Müşteri E-mail:</strong> {invoice.clientEmail}</p>
-                <p><strong>Hizmet Açıklaması:</strong> {invoice.serviceDescription}</p>
-                <p><strong>Tutar:</strong> {invoice.amount} {invoice.currency}</p>
-                <p><strong>Fatura Numarası:</strong> {invoice.invoiceNumber}</p>
-                <p><strong>Ödeme Tarihi:</strong> {invoice.paymentDate}</p>
-                <p><strong>Vergi Bilgileri:</strong> {invoice.taxInfo}</p>
-                <p><strong>İndirim:</strong> {invoice.discount}%</p>
-                <p><strong>İndirimli Tutar:</strong> {invoice.finalAmount} {invoice.currency}</p>
-                <p><strong>Notlar:</strong> {invoice.notes}</p>
+                <p><strong>Customer Name:</strong> {invoice.clientName}</p>
+                <p><strong>Customer Email:</strong> {invoice.clientEmail}</p>
+                <p><strong>Service Description:</strong> {invoice.serviceDescription}</p>
+                <p><strong>Amount:</strong> {invoice.amount} {invoice.currency}</p>
+                <p><strong>Invoice Number:</strong> {invoice.invoiceNumber}</p>
+                <p><strong>Payment Date:</strong> {invoice.paymentDate}</p>
+                <p><strong>Tax Information:</strong> {invoice.taxInfo}</p>
+                <p><strong>Discount:</strong> {invoice.discount}%</p>
+                <p><strong>Discounted Amount:</strong> {invoice.finalAmount} {invoice.currency}</p>
+                <p><strong>Notes:</strong> {invoice.notes}</p>
                 {invoice.logoURL && <img src={invoice.logoURL} alt="Logo" className="invoice-logo" />}
-                <p><strong>Oluşturulma Tarihi:</strong> {invoice.createdAt?.toDate().toLocaleString() || 'Tarih bulunamadı'}</p>
+                <p><strong>Creation Date:</strong> {invoice.createdAt?.toDate().toLocaleString() || 'Date not found'}</p>
                 <div className="button-group">
-                  <button className="edit-button" onClick={() => setIsEditing(true)}>Düzenle</button>
-                  <button className="delete-button" onClick={deleteInvoice}>Sil</button>
-                  <button className="pdf-button" onClick={() => generatePDF(invoice)}>PDF Olarak İndir</button>
+                  <button className="edit-button" onClick={() => setIsEditing(true)}>Edit</button>
+                  <button className="delete-button" onClick={() => setDeleteDialogOpen(true)}>Delete</button>
+                  <button className="pdf-button" onClick={() => generatePDF(invoice)}>Download as PDF</button>
                   {showSendEmailButton && (
                     <button className="pdf-button" onClick={sendInvoiceEmail}>Send Email</button>
                   )}
@@ -367,9 +392,50 @@ const InvoiceDetails = () => {
             )}
           </>
         ) : (
-          <p>Yükleniyor...</p>
+          <p>Loading...</p>
         )}
       </div>
+
+      <Dialog
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Notification"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {modalMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setModalOpen(false)} color="primary">
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Delete Invoice"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete this invoice?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={deleteInvoice} color="primary" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
