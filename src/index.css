@@ -169,13 +169,36 @@ body {
 .how-it-works {
   padding: 50px 20px;
   background-color: #f4f4f9;
-  text-align: center;
+}
+
+.how-it-works h2{
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.how-it-works p {
+  color: #777;
+  font-size: 1rem;
+  margin-bottom: 30px;
+}
+
+.steps-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
 }
 
 .step {
+  width: 25%;
+  vertical-align: top;
   margin-bottom: 40px;
 }
 
+.step-number{
+  font-size: 8rem;
+  margin-bottom: 0;
+  color: #e9cd44;
+}
 .step h3 {
   font-size: 1.8rem;
   margin-bottom: 10px;
