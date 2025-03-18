@@ -10,7 +10,7 @@ h2{
 body {
   font-family: 'Arial', sans-serif;
   line-height: 1.6;
-  background-color: #222831; 
+  background-color: #f4f4f9; 
 }
 /* https://colorhunt.co/palette/d6efd880af81508d4e1a5319 */
 /* Navbar */
@@ -80,6 +80,7 @@ body {
 }
 
 .hero-container h1 {
+  color: #374151;
   font-size: 3rem;
   margin-bottom: 20px;
 }
@@ -125,42 +126,43 @@ body {
 
 /* Features */
 .features-container {
-  padding: 50px 20px;
-  text-align: center;
-}
-
-.features-container h2 {
-  font-size: 2rem;
-  margin-bottom: 40px;
-}
-
-.features {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-evenly;
+  gap: 20px;
   flex-wrap: wrap;
-  gap: 30px;
+  padding: 50px 20px;
 }
 
 .feature {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  width: 250px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
   text-align: center;
+  padding: 30px;
+  width: 350px;
 }
 
-.feature-icon{
-  font-size: 30px;
-
+.feature-icon {
+  font-size: 70px;
+  padding: 20px;
+  border-radius: 50%;
+  display: inline-block;
 }
-.feature h3 {
-  font-size: 1.5rem;
+
+.feature-content {
+  width: 100%;
+  padding: 30px 10px;
+  border-radius: 10px;
+}
+h3 {
+  font-size: 1.4rem;
+  color: #333;
   margin-bottom: 10px;
 }
 
-.feature p {
-  color: #777;
+p {
+  color: #555;
+  font-size: 1rem;
 }
 
 /* Features */
@@ -171,11 +173,18 @@ body {
   background-color: #f4f4f9;
 }
 
-.how-it-works h2{
+.how-it-works-title{
   font-size: 2rem;
+  margin-left: 100px;
   margin-bottom: 10px;
 }
 
+.how-it-works-subtitle{
+  font-size: 1.2rem;
+  color: #777;
+  margin-left: 100px;
+  margin-bottom: 30px;
+}
 .how-it-works p {
   color: #777;
   font-size: 1rem;
@@ -185,11 +194,11 @@ body {
 .steps-wrapper {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 40px;
 }
 
 .step {
-  width: 25%;
+  width: 300px;
   vertical-align: top;
   margin-bottom: 40px;
 }
@@ -199,6 +208,7 @@ body {
   margin-bottom: 0;
   color: #e9cd44;
 }
+
 .step h3 {
   font-size: 1.8rem;
   margin-bottom: 10px;

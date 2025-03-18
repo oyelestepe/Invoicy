@@ -3,8 +3,8 @@ import React from 'react';
 const HowItWorks = () => {
   return (
     <div className="how-it-works">
-      <h2>How It Works?</h2>
-      <p>Generate professional invoices effortlessly, download them as PDF, or send them directly via e-mail—all in just a few clicks.</p>
+      <h2 className='how-it-works-title'>How It Works?</h2>
+      <p className='how-it-works-subtitle'>Generate professional invoices effortlessly, download them as PDF, or send them directly via e-mail—all in just a few clicks.</p>
       <div className="steps-wrapper">
         <div className="step">
         <h4 className='step-number'>1</h4>
