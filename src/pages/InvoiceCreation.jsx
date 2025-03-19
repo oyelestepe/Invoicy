@@ -19,7 +19,6 @@ const InvoiceCreation = () => {
   const [taxInfo, setTaxInfo] = useState('');
   const [discount, setDiscount] = useState('');
   const [notes, setNotes] = useState('');
-  const [logoFile, setLogoFile] = useState(null); // State to store the uploaded logo file
   const [userId, setUserId] = useState(null);
   const [finalAmount, setFinalAmount] = useState(''); // Discounted total amount
   const [showSendEmailButton, setShowSendEmailButton] = useState(false); // State to manage the visibility of the "Send Email" button
@@ -45,6 +44,15 @@ const InvoiceCreation = () => {
     setFinalAmount(discountedAmount ? discountedAmount.toFixed(2) : ''); // Show with 2 decimals
   }, [amount, discount]);
 
+  const handleAmountChange = (e) => {
+    const value = e.target.value.replace(/,/g, '');
+    setAmount(value);
+  };
+
+  const formatAmount = (value) => {
+    return new Intl.NumberFormat().format(value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -67,11 +75,10 @@ const InvoiceCreation = () => {
         notes,
         createdAt: serverTimestamp(),
         finalAmount: finalAmountCalculated ? finalAmountCalculated.toFixed(2) : '', // Discounted amount saved here
-        logoURL: logoFile ? URL.createObjectURL(logoFile) : null, // Save the logo URL
       });
 
       // Create PDF
-      const pdfBytes = await createInvoicePDF({ clientName, clientEmail, serviceDescription, amount, discount: discountValue, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoFile });
+      const pdfBytes = await createInvoicePDF({ clientName, clientEmail, serviceDescription, amount, discount: discountValue, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes });
       setPdfBytes(pdfBytes);
 
       setModalMessage('Invoice successfully saved!');
@@ -88,92 +95,94 @@ const InvoiceCreation = () => {
   };
 
   const createInvoicePDF = async (invoiceData) => {
-    const { clientName, clientEmail, serviceDescription, amount, discount, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes, logoFile } = invoiceData;
+    const { clientName, clientEmail, serviceDescription, amount, discount, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes } = invoiceData;
 
     try {
       const doc = new jsPDF();
+      doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
+      doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
+      doc.setFont('FreeSerif');
+
       const margin = 20;
       const lineHeight = 10;
       const startX = margin;
       let currentY = margin;
 
-      // Add the logo to the PDF if it exists
-      if (logoFile) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const logoDataUrl = event.target.result;
-          doc.addImage(logoDataUrl, 'PNG', 150, 10, 50, 20);
-        };
-        reader.readAsDataURL(logoFile);
-      }
+      // Add the logo to the PDF from the public directory
+      const logoURL = '/logo.png';
+      const img = new Image();
+      img.src = logoURL;
+      img.onload = () => {
+        doc.addImage(img, 'PNG', 150, 10, 50, 20);
 
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Invoice', startX, currentY);
+        doc.setFontSize(24);
+        doc.setFont('FreeSerif', 'bold');
+        doc.text('Invoice', startX, currentY);
 
-      currentY += lineHeight * 3;
+        currentY += lineHeight * 3;
 
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Customer Information:', startX, currentY);
+        doc.setFontSize(14);
+        doc.setFont('FreeSerif', 'bold');
+        doc.text('Customer Information:', startX, currentY);
 
-      currentY += lineHeight;
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Name: ${clientName}`, startX, currentY);
-      currentY += lineHeight;
-      doc.text(`E-mail: ${clientEmail}`, startX, currentY);
+        currentY += lineHeight;
+        doc.setFont('FreeSerif', 'normal');
+        doc.text(`Name: ${clientName}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`E-mail: ${clientEmail}`, startX, currentY);
 
-      currentY += lineHeight * 2;
-      doc.setFont('helvetica', 'bold');
-      doc.text('Service Information:', startX, currentY);
+        currentY += lineHeight * 2;
+        doc.setFont('FreeSerif', 'bold');
+        doc.text('Service Information:', startX, currentY);
 
-      currentY += lineHeight;
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Explanation: ${serviceDescription}`, startX, currentY);
+        currentY += lineHeight;
+        doc.setFont('FreeSerif', 'normal');
+        doc.text(`Explanation: ${serviceDescription}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Amount: ${amount} ${currency}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Amount: ${amount} ${currency}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Invoice Number: ${invoiceNumber}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Invoice Number: ${invoiceNumber}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Payment Date: ${paymentDate}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Payment Date: ${paymentDate}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Tax Information: ${taxInfo}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Tax Information: ${taxInfo}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Discount: ${discount}%`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Discount: ${discount}%`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Discounted Amount: ${finalAmountCalculated} ${currency}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Discounted Amount: ${finalAmountCalculated} ${currency}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Notes: ${notes}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Notes: ${notes}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Creation Date: ${new Date().toLocaleString()}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Creation Date: ${new Date().toLocaleString()}`, startX, currentY);
 
-      currentY += lineHeight * 2;
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Final Amount: ${finalAmountCalculated} ${currency}`, startX, currentY);
+        currentY += lineHeight * 2;
+        doc.setFont('FreeSerif', 'bold');
+        doc.text(`Final Amount: ${finalAmountCalculated} ${currency}`, startX, currentY);
 
-      currentY += lineHeight * 2;
-      doc.setFontSize(12);
-      doc.setTextColor(100);
-      doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
+        currentY += lineHeight * 2;
+        doc.setFontSize(12);
+        doc.setTextColor(100);
+        doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
 
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.5);
-      doc.line(margin, margin, 210 - margin, margin);
-      doc.line(margin, currentY + 5, 210 - margin, currentY + 5);
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.5);
+        doc.line(margin, margin, 210 - margin, margin);
+        doc.line(margin, currentY + 5, 210 - margin, currentY + 5);
 
-      const pdfBytes = doc.output('arraybuffer');
-      setPdfBytes(pdfBytes);
+        const pdfBytes = doc.output('arraybuffer');
+        setPdfBytes(pdfBytes);
 
-      console.log('PDF generated successfully on client side.');
-      return pdfBytes;
+        console.log('PDF generated successfully on client side.');
+        return pdfBytes;
+      };
     } catch (error) {
       console.error('Error generating PDF on client side:', error);
       setModalMessage('PDF generation failed. Please try again.');
@@ -262,12 +271,13 @@ const InvoiceCreation = () => {
             required
           />
           <input
-            type="number"
+            type="text"
             placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            value={formatAmount(amount)}
+            onChange={handleAmountChange}
             required
           />
+          <label>Currency</label>
           <input
             type="text"
             placeholder="Currency"
@@ -275,6 +285,7 @@ const InvoiceCreation = () => {
             onChange={(e) => setCurrency(e.target.value)}
             required
           />
+          <label>Invoice Number, Payment Date, Tax Information, Discount (%)</label>
           <input
             type="text"
             placeholder="Invoice Number"
@@ -282,19 +293,30 @@ const InvoiceCreation = () => {
             onChange={(e) => setInvoiceNumber(e.target.value)}
             required
           />
+          <label>Issue Date</label>
           <input
             type="date"
-            placeholder="Payment Date"
+            placeholder="Issue Date"
             value={paymentDate}
             onChange={(e) => setPaymentDate(e.target.value)}
             required
           />
+          <label>Due Date</label>
+          <input
+            type="date"
+            placeholder="Due Date"
+            value={paymentDate}
+            onChange={(e) => setPaymentDate(e.target.value)}
+            required
+          />
+          <label>Tax Information</label>
           <input
             type="text"
             placeholder="Tax Information"
             value={taxInfo}
             onChange={(e) => setTaxInfo(e.target.value)}
           />
+          <label>Discount (%)</label>
           <input
             type="number"
             placeholder="Discount (%)"
@@ -306,11 +328,6 @@ const InvoiceCreation = () => {
             placeholder="Notes and explanations"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-          />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setLogoFile(e.target.files[0])}
           />
           <button type="submit">Create Invoice</button>
         </form>
