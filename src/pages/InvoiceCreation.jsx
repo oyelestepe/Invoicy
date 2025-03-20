@@ -15,7 +15,8 @@ const InvoiceCreation = () => {
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState(''); // Allow user to type any currency
   const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [paymentDate, setPaymentDate] = useState('');
+  const [issueDate, setIssueDate] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const [taxInfo, setTaxInfo] = useState('');
   const [discount, setDiscount] = useState('');
   const [notes, setNotes] = useState('');
@@ -56,6 +57,13 @@ const InvoiceCreation = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Ensure mandatory fields are filled
+    if (!clientName || !clientEmail || !amount || !currency || !issueDate || !dueDate) {
+      setModalMessage('Please fill in all mandatory fields.');
+      setModalOpen(true);
+      return;
+    }
+
     // Calculate discounted total amount
     const discountValue = discount ? parseFloat(discount) : 0;
     const finalAmountCalculated = amount ? amount - (amount * (discountValue / 100)) : amount;
@@ -69,7 +77,8 @@ const InvoiceCreation = () => {
         amount: parseFloat(amount) || 0, // User entered amount
         currency,
         invoiceNumber,
-        paymentDate,
+        issueDate,
+        dueDate,
         taxInfo,
         discount: discountValue,
         notes,
@@ -78,7 +87,20 @@ const InvoiceCreation = () => {
       });
 
       // Create PDF
-      const pdfBytes = await createInvoicePDF({ clientName, clientEmail, serviceDescription, amount, discount: discountValue, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes });
+      const pdfBytes = await createInvoicePDF({
+        clientName,
+        clientEmail,
+        serviceDescription,
+        amount,
+        discount: discountValue,
+        currency,
+        finalAmountCalculated,
+        invoiceNumber,
+        issueDate,
+        dueDate,
+        taxInfo,
+        notes,
+      });
       setPdfBytes(pdfBytes);
 
       setModalMessage('Invoice successfully saved!');
@@ -95,7 +117,20 @@ const InvoiceCreation = () => {
   };
 
   const createInvoicePDF = async (invoiceData) => {
-    const { clientName, clientEmail, serviceDescription, amount, discount, currency, finalAmountCalculated, invoiceNumber, paymentDate, taxInfo, notes } = invoiceData;
+    const {
+      clientName,
+      clientEmail,
+      serviceDescription,
+      amount,
+      discount,
+      currency,
+      finalAmountCalculated,
+      invoiceNumber,
+      issueDate,
+      dueDate,
+      taxInfo,
+      notes,
+    } = invoiceData;
 
     try {
       const doc = new jsPDF();
@@ -137,31 +172,42 @@ const InvoiceCreation = () => {
 
         currentY += lineHeight;
         doc.setFont('FreeSerif', 'normal');
-        doc.text(`Explanation: ${serviceDescription}`, startX, currentY);
-
-        currentY += lineHeight;
         doc.text(`Amount: ${amount} ${currency}`, startX, currentY);
 
         currentY += lineHeight;
-        doc.text(`Invoice Number: ${invoiceNumber}`, startX, currentY);
+        doc.text(`Issue Date: ${issueDate}`, startX, currentY);
 
         currentY += lineHeight;
-        doc.text(`Payment Date: ${paymentDate}`, startX, currentY);
+        doc.text(`Due Date: ${dueDate}`, startX, currentY);
 
-        currentY += lineHeight;
-        doc.text(`Tax Information: ${taxInfo}`, startX, currentY);
+        if (serviceDescription) {
+          currentY += lineHeight;
+          doc.text(`Description: ${serviceDescription}`, startX, currentY);
+        }
 
-        currentY += lineHeight;
-        doc.text(`Discount: ${discount}%`, startX, currentY);
+        if (invoiceNumber) {
+          currentY += lineHeight;
+          doc.text(`Invoice Number: ${invoiceNumber}`, startX, currentY);
+        }
 
-        currentY += lineHeight;
-        doc.text(`Discounted Amount: ${finalAmountCalculated} ${currency}`, startX, currentY);
+        if (taxInfo) {
+          currentY += lineHeight;
+          doc.text(`Tax Information: ${taxInfo}`, startX, currentY);
+        }
 
-        currentY += lineHeight;
-        doc.text(`Notes: ${notes}`, startX, currentY);
+        if (discount) {
+          currentY += lineHeight;
+          doc.text(`Discount: ${discount}%`, startX, currentY);
 
-        currentY += lineHeight;
-        doc.text(`Creation Date: ${new Date().toLocaleString()}`, startX, currentY);
+          // Include discounted amount only if discount is provided
+          currentY += lineHeight;
+          doc.text(`Discounted Amount: ${finalAmountCalculated} ${currency}`, startX, currentY);
+        }
+
+        if (notes) {
+          currentY += lineHeight;
+          doc.text(`Notes: ${notes}`, startX, currentY);
+        }
 
         currentY += lineHeight * 2;
         doc.setFont('FreeSerif', 'bold');
@@ -249,88 +295,128 @@ const InvoiceCreation = () => {
       <div className="invoice-creation-container">
         <h2>Create Invoice</h2>
         <form className="invoice-creation-form" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Client Name"
-            value={clientName}
-            onChange={(e) => setClientName(e.target.value)}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Client E-mail"
-            value={clientEmail}
-            onChange={(e) => setClientEmail(e.target.value)}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Service Description"
-            value={serviceDescription}
-            onChange={(e) => setServiceDescription(e.target.value)}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Amount"
-            value={formatAmount(amount)}
-            onChange={handleAmountChange}
-            required
-          />
-          <label>Currency</label>
-          <input
-            type="text"
-            placeholder="Currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            required
-          />
-          <label>Invoice Number, Payment Date, Tax Information, Discount (%)</label>
-          <input
-            type="text"
-            placeholder="Invoice Number"
-            value={invoiceNumber}
-            onChange={(e) => setInvoiceNumber(e.target.value)}
-            required
-          />
-          <label>Issue Date</label>
-          <input
-            type="date"
-            placeholder="Issue Date"
-            value={paymentDate}
-            onChange={(e) => setPaymentDate(e.target.value)}
-            required
-          />
-          <label>Due Date</label>
-          <input
-            type="date"
-            placeholder="Due Date"
-            value={paymentDate}
-            onChange={(e) => setPaymentDate(e.target.value)}
-            required
-          />
-          <label>Tax Information</label>
-          <input
-            type="text"
-            placeholder="Tax Information"
-            value={taxInfo}
-            onChange={(e) => setTaxInfo(e.target.value)}
-          />
-          <label>Discount (%)</label>
-          <input
-            type="number"
-            placeholder="Discount (%)"
-            value={discount}
-            onChange={(e) => setDiscount(e.target.value)}
-          />
-          <p>Total Amount: {finalAmount} {currency}</p> {/* Discounted total amount shown here */}
-          <textarea
-            placeholder="Notes and explanations"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
+          <div className="form-group">
+            <label>Client Name</label>
+            <input
+              type="text"
+              placeholder="Client Name"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Client E-mail</label>
+            <input
+              type="email"
+              placeholder="Client E-mail"
+              value={clientEmail}
+              onChange={(e) => setClientEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Service Description</label>
+            <input
+              type="text"
+              placeholder="Service Description"
+              value={serviceDescription}
+              onChange={(e) => setServiceDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="row">
+            <div className="column">
+              <label>Amount</label>
+              <input
+                type="text"
+                placeholder="Amount"
+                value={formatAmount(amount)}
+                onChange={handleAmountChange}
+                required
+              />
+            </div>
+            <div className="column">
+              <label>Currency</label>
+              <input
+                type="text"
+                placeholder="Currency"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Invoice Number</label>
+            <input
+              type="text"
+              placeholder="Invoice Number"
+              value={invoiceNumber}
+              onChange={(e) => setInvoiceNumber(e.target.value)}
+            />
+          </div>
+
+          <div className="row">
+            <div className="column">
+              <label>Issue Date</label>
+              <input
+                type="date"
+                placeholder="Issue Date"
+                value={issueDate}
+                onChange={(e) => setIssueDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="column">
+              <label>Due Date</label>
+              <input
+                type="date"
+                placeholder="Due Date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Tax Information</label>
+            <input
+              type="text"
+              placeholder="Tax Information"
+              value={taxInfo}
+              onChange={(e) => setTaxInfo(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Discount (%)</label>
+            <input
+              type="number"
+              placeholder="Discount (%)"
+              value={discount}
+              onChange={(e) => setDiscount(e.target.value)}
+            />
+          </div>
+
+          <p>Total Amount: {finalAmount} {currency}</p>
+
+          <div className="form-group">
+            <label>Notes and Explanations</label>
+            <textarea
+              placeholder="Notes and explanations"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </div>
+
           <button type="submit">Create Invoice</button>
         </form>
+
         {showSendEmailButton && (
           <button onClick={sendInvoiceEmail}>Send Email</button>
         )}
