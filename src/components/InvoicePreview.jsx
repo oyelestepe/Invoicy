@@ -12,101 +12,92 @@ const InvoicePreview = ({ invoice }) => {
       const startX = margin;
       let currentY = margin;
 
+      // Title
       doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      doc.text('FATURA', startX, currentY);
+      doc.text('INVOICE', startX, currentY);
 
       currentY += lineHeight * 3;
 
+      // Customer Information
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('Müşteri Bilgileri:', startX, currentY);
+      doc.text('Customer Information:', startX, currentY);
 
       currentY += lineHeight;
       doc.setFont('helvetica', 'normal');
-      doc.text(`Adı: ${invoice.clientName || ''}`, startX, currentY);
+      doc.text(`Name: ${invoice.clientName}`, startX, currentY);
       currentY += lineHeight;
-      doc.text(`E-mail: ${invoice.clientEmail || ''}`, startX, currentY);
+      doc.text(`Email: ${invoice.clientEmail}`, startX, currentY);
 
       currentY += lineHeight * 2;
+
+      // Service Information
       doc.setFont('helvetica', 'bold');
-      doc.text('Hizmet Bilgileri:', startX, currentY);
+      doc.text('Service Information:', startX, currentY);
 
       currentY += lineHeight;
       doc.setFont('helvetica', 'normal');
-      doc.text(`Açıklama: ${invoice.serviceDescription || ''}`, startX, currentY);
+      doc.text(`Amount: ${invoice.amount} ${invoice.currency}`, startX, currentY);
 
       currentY += lineHeight;
-      doc.text(`Tutar: ${invoice.amount || ''} ${invoice.currency || ''}`, startX, currentY);
+      doc.text(`Issue Date: ${invoice.issueDate}`, startX, currentY);
 
-      if (invoice.discount) {
+      currentY += lineHeight;
+      doc.text(`Due Date: ${invoice.dueDate}`, startX, currentY);
+
+      // Optional Fields
+      if (invoice.serviceDescription) {
         currentY += lineHeight;
-        doc.text(`İndirim: ${invoice.discount || ''}%`, startX, currentY);
+        doc.text(`Description: ${invoice.serviceDescription}`, startX, currentY);
       }
 
-      currentY += lineHeight;
-      doc.text(
-        `Oluşturulma Tarihi: ${
-          invoice.createdAt
-            ? invoice.createdAt.toDate().toLocaleString()
-            : ''
-        }`,
-        startX,
-        currentY
-      );
+      if (invoice.invoiceNumber) {
+        currentY += lineHeight;
+        doc.text(`Invoice Number: ${invoice.invoiceNumber}`, startX, currentY);
+      }
+
+      if (invoice.taxInfo) {
+        currentY += lineHeight;
+        doc.text(`Tax Information: ${invoice.taxInfo}`, startX, currentY);
+      }
+
+      // Include discount and discounted amount only if discount > 0
+      if (invoice.discount > 0) {
+        currentY += lineHeight;
+        doc.text(`Discount: ${invoice.discount}%`, startX, currentY);
+
+        const discountedAmount = (invoice.amount - (invoice.amount * (invoice.discount / 100))).toFixed(2);
+        currentY += lineHeight;
+        doc.text(`Discounted Amount: ${discountedAmount} ${invoice.currency}`, startX, currentY);
+      }
+
+      if (invoice.notes) {
+        currentY += lineHeight;
+        doc.text(`Notes: ${invoice.notes}`, startX, currentY);
+      }
 
       currentY += lineHeight * 2;
+
+      // Footer
       doc.setFont('helvetica', 'bold');
-      doc.text(
-        `Toplam Tutar: ${invoice.finalAmount || ''} ${invoice.currency || ''}`,
-        startX,
-        currentY
-      );
+      doc.text(`Total Amount: ${invoice.finalAmount || invoice.amount} ${invoice.currency}`, startX, currentY);
 
       currentY += lineHeight * 2;
       doc.setFontSize(12);
       doc.setTextColor(100);
-      doc.text(
-        'Bu bir dijital faturadır. Islak imza gerekmez.',
-        startX,
-        currentY
-      );
+      doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
 
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.5);
-      doc.line(margin, margin, 210 - margin, margin);
-      doc.line(margin, currentY + 5, 210 - margin, currentY + 5);
+      // Generate PDF URL
+      const pdfBlob = doc.output('blob');
+      const newPdfUrl = URL.createObjectURL(pdfBlob);
 
-      // Logo ekleme (eğer varsa)
-      if (invoice.logoFile) {
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          const logoImageBytes = new Uint8Array(event.target.result);
-          const logo = await doc.embedJpg(logoImageBytes);
-          doc.addImage(logo, 'JPEG', 450, 750, 100, 50);
-
-          const pdfBlob = doc.output('blob');
-          const newPdfUrl = URL.createObjectURL(pdfBlob);
-
-          setPdfUrl((prevUrl) => {
-            if (prevUrl) {
-              URL.revokeObjectURL(prevUrl);
-            }
-            return newPdfUrl;
-          });
-        };
-        reader.readAsArrayBuffer(invoice.logoFile);
-      } else {
-        const pdfBlob = doc.output('blob');
-        const newPdfUrl = URL.createObjectURL(pdfBlob);
-
-        setPdfUrl((prevUrl) => {
-          if (prevUrl) {
-            URL.revokeObjectURL(prevUrl);
-          }
-          return newPdfUrl;
-        });
-      }
+      setPdfUrl((prevUrl) => {
+        if (prevUrl) {
+          URL.revokeObjectURL(prevUrl);
+        }
+        return newPdfUrl;
+      });
     };
 
     if (invoice) {
@@ -116,17 +107,17 @@ const InvoicePreview = ({ invoice }) => {
 
   return (
     <div className="invoice-preview">
-      <h3>Fatura Önizlemesi</h3>
+      <h3>Invoice Preview</h3>
       {pdfUrl ? (
         <iframe
           src={pdfUrl}
-          title="Fatura Önizlemesi"
+          title="Invoice Preview"
           width="100%"
           height="600px"
           style={{ border: 'none' }}
         ></iframe>
       ) : (
-        <p>Önizleme yükleniyor...</p>
+        <p>Loading preview...</p>
       )}
     </div>
   );
