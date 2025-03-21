@@ -28,7 +28,7 @@ const Navbar = () => {
       <Link to="/">
         <img src="/logo.png" alt="Logo" className="navbar-logo" />
       </Link>      
-      <ul className="navbar-links">
+      <ul className="navbar-links" id="primary">
         <li><Link to="/">Anasayfa</Link></li>
         <li><Link to="/faq">FaQ</Link></li>        
         {isLoggedIn ? (

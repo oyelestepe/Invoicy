@@ -12,8 +12,9 @@ body {
   line-height: 1.6;
   background-color: #f4f4f9; 
 }
-/* https://colorhunt.co/palette/d6efd880af81508d4e1a5319 */
+
 /* Navbar */
+
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -27,31 +28,55 @@ body {
   width: auto; 
 }
 
-.navbar-links {
+#primary {
   display: flex;
+  align-items: center;
+  justify-content: center;
   list-style: none;
-  margin: 0;
-  padding: 0;
-  gap: 20px;
-  align-items: center;
 }
 
-.navbar-links li {
-  display: flex;
-  align-items: center;
+#primary li {
+  margin: 0 20px;
 }
 
-.navbar-links a {
-  color: #d8dfe9;
+#primary a {
   text-decoration: none;
+  font-family: 'Open Sans', sans-serif;
   font-size: 16px;
-  font-weight: 500;
-  transition: color 0.3s ease;
+  font-weight: bold;
+  color: #fff;
+  background-image: linear-gradient(
+    to right,
+    #e9cd44,
+    #e9cd44 50%,
+    #fff 50%
+  );
+  background-size: 200% 100%;
+  background-position: -100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: all 0.3s ease-in-out;
+  position: relative;
 }
 
-.navbar-links a:hover {
+#primary a::before {
+  content: '';
+  display: block;
+  width: 0;
+  height: 3px;
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  background: #e9cd44;
+  transition: all 0.3s ease-in-out;
+}
 
-  border-bottom: 1.2px solid #d8dfe9;
+#primary a:hover {
+  background-position: 0%;
+}
+
+#primary a:hover::before {
+  width: 100%;
 }
 
 .logout-button {
