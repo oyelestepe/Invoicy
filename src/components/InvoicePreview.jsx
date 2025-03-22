@@ -12,92 +12,100 @@ const InvoicePreview = ({ invoice }) => {
       const startX = margin;
       let currentY = margin;
 
-      // Title
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.text('INVOICE', startX, currentY);
+      // Add the logo to the PDF
+      const logoURL = '/logo.png'; // Path to your logo file
+      const img = new Image();
+      img.src = logoURL;
+      img.onload = () => {
+        doc.addImage(img, 'PNG', 150, 10, 50, 20); // Add the logo to the top-right corner
 
-      currentY += lineHeight * 3;
+        // Title
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('INVOICE', startX, currentY);
 
-      // Customer Information
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Customer Information:', startX, currentY);
+        currentY += lineHeight * 3;
 
-      currentY += lineHeight;
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Name: ${invoice.clientName}`, startX, currentY);
-      currentY += lineHeight;
-      doc.text(`Email: ${invoice.clientEmail}`, startX, currentY);
+        // Customer Information
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Customer Information:', startX, currentY);
 
-      currentY += lineHeight * 2;
-
-      // Service Information
-      doc.setFont('helvetica', 'bold');
-      doc.text('Service Information:', startX, currentY);
-
-      currentY += lineHeight;
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Amount: ${invoice.amount} ${invoice.currency}`, startX, currentY);
-
-      currentY += lineHeight;
-      doc.text(`Issue Date: ${invoice.issueDate}`, startX, currentY);
-
-      currentY += lineHeight;
-      doc.text(`Due Date: ${invoice.dueDate}`, startX, currentY);
-
-      // Optional Fields
-      if (invoice.serviceDescription) {
         currentY += lineHeight;
-        doc.text(`Description: ${invoice.serviceDescription}`, startX, currentY);
-      }
-
-      if (invoice.invoiceNumber) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Name: ${invoice.clientName}`, startX, currentY);
         currentY += lineHeight;
-        doc.text(`Invoice Number: ${invoice.invoiceNumber}`, startX, currentY);
-      }
+        doc.text(`Email: ${invoice.clientEmail}`, startX, currentY);
 
-      if (invoice.taxInfo) {
+        currentY += lineHeight * 2;
+
+        // Service Information
+        doc.setFont('helvetica', 'bold');
+        doc.text('Service Information:', startX, currentY);
+
         currentY += lineHeight;
-        doc.text(`Tax Information: ${invoice.taxInfo}`, startX, currentY);
-      }
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Amount: ${invoice.amount} ${invoice.currency}`, startX, currentY);
 
-      // Include discount and discounted amount only if discount > 0
-      if (invoice.discount > 0) {
         currentY += lineHeight;
-        doc.text(`Discount: ${invoice.discount}%`, startX, currentY);
+        doc.text(`Issue Date: ${invoice.issueDate}`, startX, currentY);
 
-        const discountedAmount = (invoice.amount - (invoice.amount * (invoice.discount / 100))).toFixed(2);
         currentY += lineHeight;
-        doc.text(`Discounted Amount: ${discountedAmount} ${invoice.currency}`, startX, currentY);
-      }
+        doc.text(`Due Date: ${invoice.dueDate}`, startX, currentY);
 
-      if (invoice.notes) {
-        currentY += lineHeight;
-        doc.text(`Notes: ${invoice.notes}`, startX, currentY);
-      }
-
-      currentY += lineHeight * 2;
-
-      // Footer
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Total Amount: ${invoice.finalAmount || invoice.amount} ${invoice.currency}`, startX, currentY);
-
-      currentY += lineHeight * 2;
-      doc.setFontSize(12);
-      doc.setTextColor(100);
-      doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
-
-      // Generate PDF URL
-      const pdfBlob = doc.output('blob');
-      const newPdfUrl = URL.createObjectURL(pdfBlob);
-
-      setPdfUrl((prevUrl) => {
-        if (prevUrl) {
-          URL.revokeObjectURL(prevUrl);
+        // Optional Fields
+        if (invoice.serviceDescription) {
+          currentY += lineHeight;
+          doc.text(`Description: ${invoice.serviceDescription}`, startX, currentY);
         }
-        return newPdfUrl;
-      });
+
+        if (invoice.invoiceNumber) {
+          currentY += lineHeight;
+          doc.text(`Invoice Number: ${invoice.invoiceNumber}`, startX, currentY);
+        }
+
+        if (invoice.taxInfo) {
+          currentY += lineHeight;
+          doc.text(`Tax Information: ${invoice.taxInfo}`, startX, currentY);
+        }
+
+        // Include discount and discounted amount only if discount > 0
+        if (invoice.discount > 0) {
+          currentY += lineHeight;
+          doc.text(`Discount: ${invoice.discount}%`, startX, currentY);
+
+          const discountedAmount = (invoice.amount - (invoice.amount * (invoice.discount / 100))).toFixed(2);
+          currentY += lineHeight;
+          doc.text(`Discounted Amount: ${discountedAmount} ${invoice.currency}`, startX, currentY);
+        }
+
+        if (invoice.notes) {
+          currentY += lineHeight;
+          doc.text(`Notes: ${invoice.notes}`, startX, currentY);
+        }
+
+        currentY += lineHeight * 2;
+
+        // Footer
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Total Amount: ${invoice.finalAmount || invoice.amount} ${invoice.currency}`, startX, currentY);
+
+        currentY += lineHeight * 2;
+        doc.setFontSize(12);
+        doc.setTextColor(100);
+        doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
+
+        // Generate PDF URL
+        const pdfBlob = doc.output('blob');
+        const newPdfUrl = URL.createObjectURL(pdfBlob);
+
+        setPdfUrl((prevUrl) => {
+          if (prevUrl) {
+            URL.revokeObjectURL(prevUrl);
+          }
+          return newPdfUrl;
+        });
+      };
     };
 
     if (invoice) {
