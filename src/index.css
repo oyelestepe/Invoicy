@@ -141,7 +141,7 @@ body {
 }
 
 .cta-button:hover {
-  background-color: #ff6347;
+  background-color: #d6b71d;
 }
 
 .demo-button:hover {
@@ -254,6 +254,15 @@ p {
   padding: 20px;
 }
 
+.footer-icon{
+  font-size: 1.8rem;
+  margin-right: 15px;
+  color: #e9cd44;
+}
+
+.footer-icon:hover {
+  color: #d6b71d;
+}
 .footer-container p {
   font-size: 0.9rem;
 }
