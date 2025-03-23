@@ -4,6 +4,7 @@ import { db, auth } from '../firebaseConfig';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { FaTrash } from 'react-icons/fa';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
 import './css/dashboard.css';
@@ -20,7 +21,7 @@ const Dashboard = () => {
   const [modalMessage, setModalMessage] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const pageSize = 15;
+  const pageSize = 10;
 
   // Get the current page from the query parameters
   const queryParams = new URLSearchParams(location.search);
@@ -190,6 +191,7 @@ const Dashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Footer/>
     </>
   );
 };
