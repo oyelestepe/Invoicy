@@ -144,6 +144,7 @@ body {
   color: #d8dfe9;
   text-align: center;
   padding: 100px 20px;
+  /* background-image: url('public/bg-1.webp'); */
 }
 
 .hero-container h1 {
@@ -342,3 +343,101 @@ p {
   text-align: center;
   margin-top: 20px;
 }
+
+/* InvoicePreview.css */
+
+/* User Count Section */
+.user-count-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 50px;
+  padding: 50px 20px;
+  background-color: #f4f4f9;
+  text-align: center;
+}
+
+.user-count-item h2 {
+  font-size: 3rem;
+  color: #e9cd44;
+  margin-bottom: 10px;
+}
+
+.user-count-item p {
+  font-size: 1.2rem;
+  color: #555;
+}
+/* User Count Section */
+
+/* Customer Review Section */
+.customer-review-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 50px 20px;
+  background-color: #f4f4f9;
+}
+
+.image-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.background-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.reviews-container {
+  flex: 1;
+  display: grid; 
+  grid-template-columns: repeat(2, 1fr); 
+  grid-gap: 10px; 
+  justify-items: center; 
+  align-items: start; 
+}
+
+.review-card {
+  width: 95%; /* Adjust width to fit within the grid */
+  padding: 15px; 
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.review-card:hover {
+  transform: scale(1.05);
+  z-index: 10;
+}
+
+.profile-pic {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 5px;
+}
+
+.review-content h3 {
+  font-size: 1.1rem; 
+  color: #333;
+  margin-bottom: 5px; 
+}
+
+.stars {
+  display: flex;
+  gap: 3px; 
+  margin-bottom: 5px; 
+}
+
+.review-content p {
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+}
+/* Customer Review Section */
