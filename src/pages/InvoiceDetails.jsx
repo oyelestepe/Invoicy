@@ -23,11 +23,11 @@ const InvoiceDetails = () => {
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState(''); // Allow user to type any currency
   const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [paymentDate, setPaymentDate] = useState('');
+  const [issueDate, setIssueDate] = useState('');
+  const [dueDate, setDueDate] = useState(''); 
   const [taxInfo, setTaxInfo] = useState('');
   const [discount, setDiscount] = useState('');
   const [notes, setNotes] = useState('');
-  const [logoURL, setLogoURL] = useState('');
   const [finalAmount, setFinalAmount] = useState('');
   const [showSendEmailButton, setShowSendEmailButton] = useState(false); // State to manage the visibility of the "Send Email" button
   const [pdfBytes, setPdfBytes] = useState(null); // State to store the PDF bytes
@@ -49,32 +49,39 @@ const InvoiceDetails = () => {
 
   const fetchInvoice = async () => {
     if (userId && invoiceId) {
-      const docRef = doc(db, 'customers', userId, 'invoices', invoiceId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const invoiceData = docSnap.data();
-        setInvoice(invoiceData);
-        setClientName(invoiceData.clientName || '');
-        setClientEmail(invoiceData.clientEmail || '');
-        setServiceDescription(invoiceData.serviceDescription || '');
-        setAmount(invoiceData.amount || '');
-        setCurrency(invoiceData.currency || '');
-        setInvoiceNumber(invoiceData.invoiceNumber || 'Unknown');
-        setPaymentDate(invoiceData.paymentDate || '');
-        setTaxInfo(invoiceData.taxInfo || 'Unknown');
-        setDiscount(invoiceData.discount || '');
-        setNotes(invoiceData.notes || '');
-        setLogoURL(invoiceData.logoURL || '');
-        setFinalAmount(invoiceData.finalAmount || '');
-        setShowSendEmailButton(true); // Show the "Send Email" button
-        generatePDF(invoiceData); // Generate PDF when fetching invoice
-      } else {
-        console.log('Document not found!');
+      try {
+        const docRef = doc(db, 'customers', userId, 'invoices', invoiceId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const invoiceData = docSnap.data();
+          console.log('Invoice Data:', invoiceData);
+          setInvoice(invoiceData);
+          setClientName(invoiceData.clientName || '');
+          setClientEmail(invoiceData.clientEmail || '');
+          setServiceDescription(invoiceData.serviceDescription || '');
+          setAmount(invoiceData.amount || '');
+          setCurrency(invoiceData.currency || '');
+          setInvoiceNumber(invoiceData.invoiceNumber || 'Unknown');
+          setIssueDate(invoiceData.issueDate || '');
+          setDueDate(invoiceData.dueDate || '');
+          setTaxInfo(invoiceData.taxInfo || 'Unknown');
+          setDiscount(invoiceData.discount || '');
+          setNotes(invoiceData.notes || '');
+          setFinalAmount(invoiceData.finalAmount || '');
+          setShowSendEmailButton(true);
+          generatePDF(invoiceData);
+        } else {
+          console.error('Invoice not found!');
+        }
+      } catch (error) {
+        console.error('Error fetching invoice:', error);
       }
     }
   };
 
   useEffect(() => {
+    console.log('User ID:', userId);
+    console.log('Invoice ID:', invoiceId);
     fetchInvoice();
   }, [userId, invoiceId]);
 
@@ -89,11 +96,11 @@ const InvoiceDetails = () => {
         amount: parseFloat(amount) || 0,
         currency,
         invoiceNumber,
-        paymentDate,
+        issueDate,
+        dueDate,
         taxInfo,
         discount: parseFloat(discount) || 0,
         notes,
-        logoURL,
         finalAmount: finalAmountCalculated.toFixed(2),
       });
       setModalMessage('Invoice updated successfully.');
@@ -122,9 +129,8 @@ const InvoiceDetails = () => {
   };
 
   const generatePDF = async (invoiceData) => {
-    if (!invoiceData) return;
-
     try {
+      if (!invoiceData) throw new Error('Invoice data is missing');
       const doc = new jsPDF();
       doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
       doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
@@ -135,90 +141,77 @@ const InvoiceDetails = () => {
       const startX = margin;
       let currentY = margin;
 
-      // Add the logo to the PDF if it exists
-      if (invoiceData.logoURL) {
-        const logo = await fetch(invoiceData.logoURL).then(res => res.blob()).then(blob => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-        });
-        doc.addImage(logo, 'PNG', 150, 10, 50, 20);
-      }
+      // Add the logo to the PDF
+      const logoURL = '/logo.png';
+      const img = new Image();
+      img.src = logoURL;
+      img.onload = () => {
+        doc.addImage(img, 'PNG', 150, 10, 50, 20);
 
-      doc.setFontSize(24);
-      doc.setFont('FreeSerif', 'bold');
-      doc.text('INVOICE', startX, currentY);
+        doc.setFontSize(24);
+        doc.setFont('FreeSerif', 'bold');
+        doc.text('INVOICE', startX, currentY);
 
-      currentY += lineHeight * 3;
+        currentY += lineHeight * 3;
 
-      doc.setFontSize(14);
-      doc.setFont('FreeSerif', 'bold');
-      doc.text('Customer Information:', startX, currentY);
+        doc.setFontSize(14);
+        doc.setFont('FreeSerif', 'bold');
+        doc.text('Customer Information:', startX, currentY);
 
-      currentY += lineHeight;
-      doc.setFont('FreeSerif', 'normal');
-      doc.text(`Name: ${invoiceData.clientName}`, startX, currentY);
-      currentY += lineHeight;
-      doc.text(`Email: ${invoiceData.clientEmail}`, startX, currentY);
+        currentY += lineHeight;
+        doc.setFont('FreeSerif', 'normal');
+        doc.text(`Name: ${invoiceData.clientName || 'N/A'}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Email: ${invoiceData.clientEmail || 'N/A'}`, startX, currentY);
 
-      currentY += lineHeight * 2;
-      doc.setFont('FreeSerif', 'bold');
-      doc.text('Service Information:', startX, currentY);
+        currentY += lineHeight * 2;
+        doc.setFont('FreeSerif', 'bold');
+        doc.text('Service Information:', startX, currentY);
 
-      currentY += lineHeight;
-      doc.setFont('FreeSerif', 'normal');
-      doc.text(`Description: ${invoiceData.serviceDescription}`, startX, currentY);
+        currentY += lineHeight;
+        doc.setFont('FreeSerif', 'normal');
+        doc.text(`Amount: ${formatAmount(invoiceData.amount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Amount: ${invoiceData.amount} ${invoiceData.currency}`, startX, currentY);
+        if (invoiceData.discount > 0) {
+          currentY += lineHeight;
+          doc.text(`Discount: ${invoiceData.discount}%`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Invoice Number: ${invoiceData.invoiceNumber}`, startX, currentY);
+          currentY += lineHeight;
+          doc.text(`Discounted Amount: ${formatAmount(invoiceData.finalAmount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
+        }
 
-      currentY += lineHeight;
-      doc.text(`Payment Date: ${invoiceData.paymentDate}`, startX, currentY);
+        currentY += lineHeight * 2;
+        doc.setFont('FreeSerif', 'bold');
+        doc.text(`Total Amount: ${formatAmount(invoiceData.finalAmount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Tax Information: ${invoiceData.taxInfo}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Invoice Number: ${invoiceData.invoiceNumber || 'N/A'}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Discount: ${invoiceData.discount}%`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Issue Date: ${invoiceData.issueDate || 'N/A'}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Discounted Amount: ${invoiceData.finalAmount} ${invoiceData.currency}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Due Date: ${invoiceData.dueDate || 'N/A'}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Notes: ${invoiceData.notes}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Tax Information: ${invoiceData.taxInfo || 'N/A'}`, startX, currentY);
 
-      currentY += lineHeight;
-      doc.text(`Creation Date: ${invoiceData.createdAt?.toDate().toLocaleString() || 'Date not found'}`, startX, currentY);
+        currentY += lineHeight;
+        doc.text(`Notes: ${invoiceData.notes || 'N/A'}`, startX, currentY);
 
-      currentY += lineHeight * 2;
-      doc.setFont('FreeSerif', 'bold');
-      doc.text(`Total Amount: ${invoiceData.finalAmount} ${invoiceData.currency}`, startX, currentY);
+        currentY += lineHeight * 2;
+        doc.setFontSize(12);
+        doc.setTextColor(100);
+        doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
 
-      currentY += lineHeight * 2;
-      doc.setFontSize(12);
-      doc.setTextColor(100);
-      doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
-
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.5);
-      doc.line(margin, margin, 210 - margin, margin);
-      doc.line(margin, currentY + 5, 210 - margin, currentY + 5);
-
-      const pdfBytes = doc.output('arraybuffer');
-      setPdfBytes(pdfBytes);
-
-      doc.save(`invoice-${invoiceId}.pdf`);
-      console.log('PDF generated successfully on client side.');
+        doc.save(`invoice-${invoiceData.invoiceNumber || 'unknown'}.pdf`);
+        console.log('PDF generated successfully.');
+      };
+      img.onerror = () => {
+        console.error('Failed to load logo image.');
+      };
     } catch (error) {
-      console.error('Error generating PDF on client side:', error);
-      setModalMessage('PDF generation failed. Please try again.');
-      setModalOpen(true);
+      console.error('Error generating PDF:', error);
     }
   };
 
@@ -230,7 +223,6 @@ const InvoiceDetails = () => {
     }
 
     try {
-      console.log('Sending email...');
       const response = await fetch('http://localhost:5000/send-invoice', {
         method: 'POST',
         headers: {
@@ -246,12 +238,12 @@ const InvoiceDetails = () => {
             clientEmail,
             serviceDescription,
             taxInfo,
-            paymentDate,
+            issueDate,
+            dueDate,
             finalAmount: parseFloat(finalAmount), // Ensure finalAmount is a number
             currency,
             discount,
             notes,
-            logoFile: null, // Set logoFile to null if not defined
             pdfBytes: pdfBytes ? btoa(String.fromCharCode(...new Uint8Array(pdfBytes))) : '', // Send PDF bytes as base64 string
           },
         }),
@@ -273,6 +265,13 @@ const InvoiceDetails = () => {
       setModalMessage('An error occurred while sending the email.');
       setModalOpen(true);
     }
+  };
+
+  const formatAmount = (value) => {
+    if (!value && value !== 0) return '';
+    // If value is a number, convert to string
+    const strValue = typeof value === 'number' ? value.toString() : value;
+    return strValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
   return (
@@ -303,7 +302,6 @@ const InvoiceDetails = () => {
                   placeholder="Service Description"
                   value={serviceDescription}
                   onChange={(e) => setServiceDescription(e.target.value)}
-                  required
                 />
                 <input
                   type="number"
@@ -328,9 +326,16 @@ const InvoiceDetails = () => {
                 />
                 <input
                   type="date"
-                  placeholder="Payment Date"
-                  value={paymentDate}
-                  onChange={(e) => setPaymentDate(e.target.value)}
+                  placeholder="Issue Date"
+                  value={issueDate}
+                  onChange={(e) => setIssueDate(e.target.value)}
+                  required
+                />
+                <input
+                  type="date"
+                  placeholder="Due Date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
                   required
                 />
                 <input
@@ -338,7 +343,6 @@ const InvoiceDetails = () => {
                   placeholder="Tax Information"
                   value={taxInfo}
                   onChange={(e) => setTaxInfo(e.target.value)}
-                  required
                 />
                 <input
                   type="number"
@@ -351,14 +355,6 @@ const InvoiceDetails = () => {
                   placeholder="Notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Logo URL"
-                  value={logoURL}
-                  onChange={(e) => setLogoURL(e.target.value)}
-                  required
                 />
                 <div className="button-group">
                   <button className="edit-button" onClick={updateInvoice}>Save</button>
@@ -370,14 +366,13 @@ const InvoiceDetails = () => {
                 <p><strong>Customer Name:</strong> {invoice.clientName}</p>
                 <p><strong>Customer Email:</strong> {invoice.clientEmail}</p>
                 <p><strong>Service Description:</strong> {invoice.serviceDescription}</p>
-                <p><strong>Amount:</strong> {invoice.amount} {invoice.currency}</p>
+                <p><strong>Amount:</strong> {formatAmount(invoice.amount)} {invoice.currency}</p>
                 <p><strong>Invoice Number:</strong> {invoice.invoiceNumber}</p>
                 <p><strong>Payment Date:</strong> {invoice.paymentDate}</p>
                 <p><strong>Tax Information:</strong> {invoice.taxInfo}</p>
                 <p><strong>Discount:</strong> {invoice.discount}%</p>
-                <p><strong>Discounted Amount:</strong> {invoice.finalAmount} {invoice.currency}</p>
+                <p><strong>Discounted Amount:</strong> {formatAmount(invoice.finalAmount)} {invoice.currency}</p>
                 <p><strong>Notes:</strong> {invoice.notes}</p>
-                {invoice.logoURL && <img src={invoice.logoURL} alt="Logo" className="invoice-logo" />}
                 <p><strong>Creation Date:</strong> {invoice.createdAt?.toDate().toLocaleString() || 'Date not found'}</p>
                 <div className="button-group">
                   <button className="edit-button" onClick={() => setIsEditing(true)}>Edit</button>
