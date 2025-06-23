@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { jsPDF } from 'jspdf';
+import { FreeSerifBase64 } from './FreeSerifBase64'; // Adjust the import based on your file structure
+
+// Add this function:
+const formatAmount = (value) => {
+  if (value === undefined || value === null) return '';
+  const strValue = typeof value === 'number' ? value.toString() : value;
+  return strValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
 
 const InvoicePreview = ({ invoice }) => {
   const [pdfUrl, setPdfUrl] = useState('');
@@ -7,6 +15,10 @@ const InvoicePreview = ({ invoice }) => {
   useEffect(() => {
     const generatePdfPreview = async () => {
       const doc = new jsPDF();
+      doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
+      doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
+      doc.setFont('FreeSerif', 'normal'); // Specify style
+
       const margin = 20;
       const lineHeight = 10;
       const startX = margin;
@@ -45,7 +57,7 @@ const InvoicePreview = ({ invoice }) => {
 
         currentY += lineHeight;
         doc.setFont('helvetica', 'normal');
-        doc.text(`Amount: ${invoice.amount} ${invoice.currency}`, startX, currentY);
+        doc.text(`Amount: ${formatAmount(invoice.amount)} ${invoice.currency}`, startX, currentY);
 
         currentY += lineHeight;
         doc.text(`Issue Date: ${invoice.issueDate}`, startX, currentY);
@@ -76,7 +88,7 @@ const InvoicePreview = ({ invoice }) => {
 
           const discountedAmount = (invoice.amount - (invoice.amount * (invoice.discount / 100))).toFixed(2);
           currentY += lineHeight;
-          doc.text(`Discounted Amount: ${discountedAmount} ${invoice.currency}`, startX, currentY);
+          doc.text(`Discounted Amount: ${formatAmount(discountedAmount)} ${invoice.currency}`, startX, currentY);
         }
 
         if (invoice.notes) {
@@ -88,7 +100,7 @@ const InvoicePreview = ({ invoice }) => {
 
         // Footer
         doc.setFont('helvetica', 'bold');
-        doc.text(`Total Amount: ${invoice.finalAmount || invoice.amount} ${invoice.currency}`, startX, currentY);
+        doc.text(`Total Amount: ${formatAmount(invoice.finalAmount || invoice.amount)} ${invoice.currency}`, startX, currentY);
 
         currentY += lineHeight * 2;
         doc.setFontSize(12);
