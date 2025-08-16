@@ -7,13 +7,13 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      buffer: 'buffer/',   // Buffer paketini doğru yönlendiriyoruz
+      buffer: 'buffer/',
     }
   },
   optimizeDeps: {
     esbuildOptions: {
       define: {
-        global: 'globalThis', // Vite ile uyumlu global kullanım
+        global: 'globalThis',
       },
       plugins: [
         NodeGlobalsPolyfillPlugin({
