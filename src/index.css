@@ -142,9 +142,14 @@ body {
 /* HERO */
 .hero-container {
   color: #d8dfe9;
+  height: 60vh;
   text-align: center;
   padding: 100px 20px;
-  /* background-image: url('public/bg-1.webp'); */
+  background-image: url('hero-bg.png'); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
 }
 
 .hero-container h1 {
@@ -398,11 +403,11 @@ p {
   grid-template-columns: repeat(2, 1fr); 
   grid-gap: 10px; 
   justify-items: center; 
-  align-items: start; 
+  align-items: start;
 }
 
 .review-card {
-  width: 95%; /* Adjust width to fit within the grid */
+  width: 95%;
   padding: 15px; 
   background-color: #ffffff;
   border-radius: 8px;
@@ -441,3 +446,62 @@ p {
   line-height: 1.4;
 }
 /* Customer Review Section */
+
+/* Price Section */
+.price-section {
+  padding: 50px 20px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 800px;
+  margin: 50px auto;
+}
+
+.price-title {
+  font-size: 2rem;
+  color: #333333;
+  margin-bottom: 20px;
+}
+
+.price-description {
+  font-size: 1.2rem;
+  color: #555555;
+  margin-bottom: 30px;
+}
+
+.price-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 30px 0;
+  font-size: 1rem;
+  color: #555555;
+  text-align: left;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.price-features li {
+  margin-bottom: 10px;
+}
+
+.price-buttons {
+  display: flex;
+  justify-content: center;
+}
+
+.cta-button {
+  padding: 15px 30px;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  background-color: #e9cd44;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+  background-color: #d6b71d;
+}
+/* Price Section */
