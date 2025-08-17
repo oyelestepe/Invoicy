@@ -13,37 +13,33 @@ const UserCount = () => {
     // ScrollTrigger to animate counts when the section comes into view
     ScrollTrigger.create({
       trigger: sectionRef.current,
-      start: 'top 85%', // Start animation when the section is 80% visible
+      start: 'top 80%', // Start animation when the section is 80% visible
       onEnter: () => {
-        // Animate the freelancer count
-        gsap.fromTo(
-          freelancerCountRef.current,
-          { innerText: 0 },
-          {
-            innerText: 10000,
-            duration: 2,
-            ease: 'power2.out',
-            snap: { innerText: 1 }, // Snap to whole numbers
-            onUpdate: function () {
-              freelancerCountRef.current.innerText = Math.floor(this.targets()[0].innerText).toLocaleString() + '+';
-            },
-          }
-        );
+        // Animate freelancer count
+        const freelancerObj = { value: 0 };
+        gsap.to(freelancerObj, {
+          value: 10000,
+          duration: 2,
+          ease: 'power2.out',
+          onUpdate: function () {
+            if (freelancerCountRef.current) {
+              freelancerCountRef.current.innerText = Math.floor(freelancerObj.value).toLocaleString() + '+';
+            }
+          },
+        });
 
-        // Animate the business count
-        gsap.fromTo(
-          businessCountRef.current,
-          { innerText: 0 },
-          {
-            innerText: 300,
-            duration: 2,
-            ease: 'power2.out',
-            snap: { innerText: 1 },
-            onUpdate: function () {
-              businessCountRef.current.innerText = Math.floor(this.targets()[0].innerText).toLocaleString() + '+';
-            },
-          }
-        );
+        // Animate business count
+        const businessObj = { value: 0 };
+        gsap.to(businessObj, {
+          value: 300,
+          duration: 2,
+          ease: 'power2.out',
+          onUpdate: function () {
+            if (businessCountRef.current) {
+              businessCountRef.current.innerText = Math.floor(businessObj.value).toLocaleString() + '+';
+            }
+          },
+        });
       },
     });
   }, []);

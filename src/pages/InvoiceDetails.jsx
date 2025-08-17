@@ -6,11 +6,11 @@ import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
 import { jsPDF } from 'jspdf';
 import InvoicePreview from '../components/InvoicePreview';
-import './css/invoiceDetails.css'; // Import CSS
+import './css/invoiceDetails.css';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
+import { FreeSerifBase64 } from '../components/FreeSerifBase64';
 
-// Base64 encoded FreeSerif font
-const FreeSerifBase64 = '...'; // Add the Base64 encoded string here
+const FreeSerifBase = FreeSerifBase64;
 
 const InvoiceDetails = () => {
   const { invoiceId } = useParams();
@@ -21,16 +21,16 @@ const InvoiceDetails = () => {
   const [clientEmail, setClientEmail] = useState('');
   const [serviceDescription, setServiceDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState(''); // Allow user to type any currency
+  const [currency, setCurrency] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [issueDate, setIssueDate] = useState('');
-  const [dueDate, setDueDate] = useState(''); 
+  const [dueDate, setDueDate] = useState('');
   const [taxInfo, setTaxInfo] = useState('');
   const [discount, setDiscount] = useState('');
   const [notes, setNotes] = useState('');
   const [finalAmount, setFinalAmount] = useState('');
-  const [showSendEmailButton, setShowSendEmailButton] = useState(false); // State to manage the visibility of the "Send Email" button
-  const [pdfBytes, setPdfBytes] = useState(null); // State to store the PDF bytes
+  const [showSendEmailButton, setShowSendEmailButton] = useState(false);
+  const [pdfBytes, setPdfBytes] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -54,7 +54,6 @@ const InvoiceDetails = () => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const invoiceData = docSnap.data();
-          console.log('Invoice Data:', invoiceData);
           setInvoice(invoiceData);
           setClientName(invoiceData.clientName || '');
           setClientEmail(invoiceData.clientEmail || '');
@@ -69,7 +68,6 @@ const InvoiceDetails = () => {
           setNotes(invoiceData.notes || '');
           setFinalAmount(invoiceData.finalAmount || '');
           setShowSendEmailButton(true);
-          generatePDF(invoiceData);
         } else {
           console.error('Invoice not found!');
         }
@@ -80,10 +78,16 @@ const InvoiceDetails = () => {
   };
 
   useEffect(() => {
-    console.log('User ID:', userId);
-    console.log('Invoice ID:', invoiceId);
-    fetchInvoice();
+    if (userId && invoiceId) {
+      fetchInvoice();
+    }
   }, [userId, invoiceId]);
+
+  useEffect(() => {
+    if (invoice) {
+      generatePDF(invoice);
+    }
+  }, [invoice]);
 
   const updateInvoice = async () => {
     try {
@@ -128,148 +132,147 @@ const InvoiceDetails = () => {
     }
   };
 
-  const generatePDF = async (invoiceData) => {
-    try {
-      if (!invoiceData) throw new Error('Invoice data is missing');
-      const doc = new jsPDF();
-      doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
-      doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
-      doc.setFont('FreeSerif');
+const generatePDF = async (invoiceData) => {
+  try {
+    if (!invoiceData) throw new Error('Invoice data is missing');
 
-      const margin = 20;
-      const lineHeight = 10;
-      const startX = margin;
-      let currentY = margin;
+    const doc = new jsPDF();
+    doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
+    doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
+    doc.setFont('FreeSerif', 'normal');
 
-      // Add the logo to the PDF
-      const logoURL = '/logo.png';
-      const img = new Image();
-      img.src = logoURL;
-      img.onload = () => {
-        doc.addImage(img, 'PNG', 150, 10, 50, 20);
+    const margin = 20;
+    const lineHeight = 10;
+    const startX = margin;
+    let currentY = margin;
 
-        doc.setFontSize(24);
-        doc.setFont('FreeSerif', 'bold');
-        doc.text('INVOICE', startX, currentY);
+    const logoURL = '/logo.png';
+    const img = new window.Image();
+    img.src = logoURL;
 
-        currentY += lineHeight * 3;
+    img.onload = () => finishPDF(doc, invoiceData, startX, lineHeight, currentY, img);
+    img.onerror = () => finishPDF(doc, invoiceData, startX, lineHeight, currentY);
 
-        doc.setFontSize(14);
-        doc.setFont('FreeSerif', 'bold');
-        doc.text('Customer Information:', startX, currentY);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    setModalMessage('PDF generation failed. Please try again.');
+    setModalOpen(true);
+  }
+};
 
-        currentY += lineHeight;
-        doc.setFont('FreeSerif', 'normal');
-        doc.text(`Name: ${invoiceData.clientName || 'N/A'}`, startX, currentY);
-        currentY += lineHeight;
-        doc.text(`Email: ${invoiceData.clientEmail || 'N/A'}`, startX, currentY);
+// PDF oluşturmayı tek bir fonksiyona al, logo hatası da yönetilir
+function finishPDF(doc, invoiceData, startX, lineHeight, currentY, img) {
+  if (img) doc.addImage(img, 'PNG', 150, 10, 50, 20);
 
-        currentY += lineHeight * 2;
-        doc.setFont('FreeSerif', 'bold');
-        doc.text('Service Information:', startX, currentY);
+  doc.setFontSize(24);
+  doc.text('INVOICE', startX, currentY);
 
-        currentY += lineHeight;
-        doc.setFont('FreeSerif', 'normal');
-        doc.text(`Amount: ${formatAmount(invoiceData.amount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
+  currentY += lineHeight * 3;
+  doc.setFontSize(14);
 
-        if (invoiceData.discount > 0) {
-          currentY += lineHeight;
-          doc.text(`Discount: ${invoiceData.discount}%`, startX, currentY);
+  doc.text('Customer Information:', startX, currentY);
+  currentY += lineHeight;
+  doc.text(`Name: ${invoiceData.clientName || 'N/A'}`, startX, currentY);
+  currentY += lineHeight;
+  doc.text(`Email: ${invoiceData.clientEmail || 'N/A'}`, startX, currentY);
 
-          currentY += lineHeight;
-          doc.text(`Discounted Amount: ${formatAmount(invoiceData.finalAmount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
-        }
+  currentY += lineHeight * 2;
+  doc.text('Service Information:', startX, currentY);
+  currentY += lineHeight;
+  doc.text(`Amount: ${formatAmount(invoiceData.amount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
 
-        currentY += lineHeight * 2;
-        doc.setFont('FreeSerif', 'bold');
-        doc.text(`Total Amount: ${formatAmount(invoiceData.finalAmount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
+  if (invoiceData.discount > 0) {
+    currentY += lineHeight;
+    doc.text(`Discount: ${invoiceData.discount}%`, startX, currentY);
+    currentY += lineHeight;
+    doc.text(`Discounted Amount: ${formatAmount(invoiceData.finalAmount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
+  }
 
-        currentY += lineHeight;
-        doc.text(`Invoice Number: ${invoiceData.invoiceNumber || 'N/A'}`, startX, currentY);
+  currentY += lineHeight * 2;
+  doc.text(`Total Amount: ${formatAmount(invoiceData.finalAmount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
+  currentY += lineHeight;
+  doc.text(`Invoice Number: ${invoiceData.invoiceNumber || 'N/A'}`, startX, currentY);
+  currentY += lineHeight;
+  doc.text(`Issue Date: ${invoiceData.issueDate || 'N/A'}`, startX, currentY);
+  currentY += lineHeight;
+  doc.text(`Due Date: ${invoiceData.dueDate || 'N/A'}`, startX, currentY);
+  currentY += lineHeight;
+  doc.text(`Tax Information: ${invoiceData.taxInfo || 'N/A'}`, startX, currentY);
+  currentY += lineHeight;
+  doc.text(`Notes: ${invoiceData.notes || 'N/A'}`, startX, currentY);
 
-        currentY += lineHeight;
-        doc.text(`Issue Date: ${invoiceData.issueDate || 'N/A'}`, startX, currentY);
+  currentY += lineHeight * 2;
+  doc.setFontSize(12);
+  doc.setTextColor(100);
+  doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
 
-        currentY += lineHeight;
-        doc.text(`Due Date: ${invoiceData.dueDate || 'N/A'}`, startX, currentY);
+  // PDF bytes sadece lokal değişkende
+  const pdfArrayBuffer = doc.output('arraybuffer');
+  setPdfBytes(pdfArrayBuffer); // state güncellenir ama recursive trigger olmaz
 
-        currentY += lineHeight;
-        doc.text(`Tax Information: ${invoiceData.taxInfo || 'N/A'}`, startX, currentY);
-
-        currentY += lineHeight;
-        doc.text(`Notes: ${invoiceData.notes || 'N/A'}`, startX, currentY);
-
-        currentY += lineHeight * 2;
-        doc.setFontSize(12);
-        doc.setTextColor(100);
-        doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
-
-        doc.save(`invoice-${invoiceData.invoiceNumber || 'unknown'}.pdf`);
-        console.log('PDF generated successfully.');
-      };
-      img.onerror = () => {
-        console.error('Failed to load logo image.');
-      };
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    }
-  };
+  doc.save(`invoice-${invoiceData.invoiceNumber || 'unknown'}.pdf`);
+  console.log('PDF generated successfully.');
+}
 
   const sendInvoiceEmail = async () => {
-    if (!pdfBytes) {
-      setModalMessage('PDF generation failed. Please try again.');
-      setModalOpen(true);
-      return;
-    }
+  if (!pdfBytes) {
+    setModalMessage('PDF generation failed. Please try again.');
+    setModalOpen(true);
+    return;
+  }
 
-    try {
-      const response = await fetch('http://localhost:5000/send-invoice', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          clientEmail,
-          subject: `Invoice ${invoiceNumber}`,
-          text: `Dear ${clientName},\n\nPlease find attached your invoice.\n\nBest regards,\nYour Company`,
-          invoiceData: {
-            invoiceNumber,
-            clientName,
-            clientEmail,
-            serviceDescription,
-            taxInfo,
-            issueDate,
-            dueDate,
-            finalAmount: parseFloat(finalAmount), // Ensure finalAmount is a number
-            currency,
-            discount,
-            notes,
-            pdfBytes: pdfBytes ? btoa(String.fromCharCode(...new Uint8Array(pdfBytes))) : '', // Send PDF bytes as base64 string
-          },
-        }),
-      });
+  try {
+    // Notların string olduğundan emin ol
+    const safeNotes = typeof notes === 'string' ? notes : JSON.stringify(notes);
 
-      if (!response.ok) {
-        throw new Error('Failed to send email');
-      }
+    // PDF'i Base64'e dönüştür, state'i tetiklemeden lokal değişkende kullan
+    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
 
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to send email');
-      }
+    const payload = {
+      clientEmail,
+      subject: `Invoice ${invoiceNumber}`,
+      text: `Dear ${clientName},\n\nPlease find attached your invoice.\n\nBest regards,\nYour Company`,
+      invoiceData: {
+        invoiceNumber,
+        clientName,
+        clientEmail,
+        serviceDescription,
+        taxInfo,
+        issueDate,
+        dueDate,
+        finalAmount: parseFloat(finalAmount),
+        currency,
+        discount,
+        notes: safeNotes,
+        pdfBytes: pdfBase64,
+      },
+    };
 
-      setModalMessage('Email sent successfully!');
-      setModalOpen(true);
-    } catch (error) {
-      console.error('Error sending email:', error);
-      setModalMessage('An error occurred while sending the email.');
-      setModalOpen(true);
-    }
-  };
+    console.log('Email payload:', payload);
+
+    const response = await fetch('http://localhost:5000/send-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw new Error('Failed to send email');
+
+    const data = await response.json();
+    if (!data.success) throw new Error(data.message || 'Failed to send email');
+
+    setModalMessage('Email sent successfully!');
+    setModalOpen(true);
+  } catch (error) {
+    console.error('Error sending email:', error);
+    setModalMessage('An error occurred while sending the email.');
+    setModalOpen(true);
+  }
+};
+
 
   const formatAmount = (value) => {
     if (!value && value !== 0) return '';
-    // If value is a number, convert to string
     const strValue = typeof value === 'number' ? value.toString() : value;
     return strValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
@@ -283,79 +286,17 @@ const InvoiceDetails = () => {
           <>
             {isEditing ? (
               <div>
-                <input
-                  type="text"
-                  placeholder="Customer Name"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  required
-                />
-                <input
-                  type="email"
-                  placeholder="Customer Email"
-                  value={clientEmail}
-                  onChange={(e) => setClientEmail(e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Service Description"
-                  value={serviceDescription}
-                  onChange={(e) => setServiceDescription(e.target.value)}
-                />
-                <input
-                  type="number"
-                  placeholder="Amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Currency"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Invoice Number"
-                  value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  required
-                />
-                <input
-                  type="date"
-                  placeholder="Issue Date"
-                  value={issueDate}
-                  onChange={(e) => setIssueDate(e.target.value)}
-                  required
-                />
-                <input
-                  type="date"
-                  placeholder="Due Date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Tax Information"
-                  value={taxInfo}
-                  onChange={(e) => setTaxInfo(e.target.value)}
-                />
-                <input
-                  type="number"
-                  placeholder="Discount (%)"
-                  value={discount}
-                  onChange={(e) => setDiscount(e.target.value)}
-                  required
-                />
-                <textarea
-                  placeholder="Notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
+                <input type="text" placeholder="Customer Name" value={clientName} onChange={(e) => setClientName(e.target.value)} required />
+                <input type="email" placeholder="Customer Email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} required />
+                <input type="text" placeholder="Service Description" value={serviceDescription} onChange={(e) => setServiceDescription(e.target.value)} />
+                <input type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+                <input type="text" placeholder="Currency" value={currency} onChange={(e) => setCurrency(e.target.value)} required />
+                <input type="text" placeholder="Invoice Number" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} required />
+                <input type="date" placeholder="Issue Date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required />
+                <input type="date" placeholder="Due Date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+                <input type="text" placeholder="Tax Information" value={taxInfo} onChange={(e) => setTaxInfo(e.target.value)} />
+                <input type="number" placeholder="Discount (%)" value={discount} onChange={(e) => setDiscount(e.target.value)} required />
+                <textarea placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
                 <div className="button-group">
                   <button className="edit-button" onClick={updateInvoice}>Save</button>
                   <button className="cancel-button" onClick={() => setIsEditing(false)}>Cancel</button>
@@ -378,9 +319,7 @@ const InvoiceDetails = () => {
                   <button className="edit-button" onClick={() => setIsEditing(true)}>Edit</button>
                   <button className="delete-button" onClick={() => setDeleteDialogOpen(true)}>Delete</button>
                   <button className="pdf-button" onClick={() => generatePDF(invoice)}>Download as PDF</button>
-                  {showSendEmailButton && (
-                    <button className="pdf-button" onClick={sendInvoiceEmail}>Send Email</button>
-                  )}
+                  {showSendEmailButton && <button className="pdf-button" onClick={sendInvoiceEmail}>Send Email</button>}
                 </div>
                 <InvoicePreview invoice={invoice} />
               </div>
@@ -391,44 +330,24 @@ const InvoiceDetails = () => {
         )}
       </div>
 
-      <Dialog
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{"Notification"}</DialogTitle>
+      <Dialog open={modalOpen} onClose={() => setModalOpen(false)}>
+        <DialogTitle>{"Notification"}</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            {modalMessage}
-          </DialogContentText>
+          <DialogContentText>{modalMessage}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setModalOpen(false)} color="primary">
-            OK
-          </Button>
+          <Button onClick={() => setModalOpen(false)} color="primary">OK</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{"Delete Invoice"}</DialogTitle>
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>{"Delete Invoice"}</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete this invoice?
-          </DialogContentText>
+          <DialogContentText>Are you sure you want to delete this invoice?</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={deleteInvoice} color="primary" autoFocus>
-            Delete
-          </Button>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">Cancel</Button>
+          <Button onClick={deleteInvoice} color="primary" autoFocus>Delete</Button>
         </DialogActions>
       </Dialog>
     </>
