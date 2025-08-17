@@ -46,12 +46,17 @@ const InvoiceCreation = () => {
   }, [amount, discount]);
 
   const handleAmountChange = (e) => {
-    const value = e.target.value.replace(/,/g, '');
-    setAmount(value);
+    const value = e.target.value.replace(/\./g, ''); // Remove existing dots
+    if (!isNaN(value)) { // Ensure the value is a valid number
+      setAmount(value);
+    } else {
+      setAmount(''); // Clear the amount if the input is invalid
+    }
   };
 
   const formatAmount = (value) => {
-    return new Intl.NumberFormat().format(value);
+    if (!value) return ''; // Return an empty string if the value is empty
+    return value.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // Add dots every three digits
   };
 
   const handleSubmit = async (e) => {
@@ -135,7 +140,7 @@ const InvoiceCreation = () => {
     try {
       const doc = new jsPDF();
       doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
-      doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
+      doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal', 'normal');
       doc.setFont('FreeSerif');
 
       const margin = 20;
@@ -143,7 +148,7 @@ const InvoiceCreation = () => {
       const startX = margin;
       let currentY = margin;
 
-      // Add the logo to the PDF from the public directory
+      // Add the logo to the PDF
       const logoURL = '/logo.png';
       const img = new Image();
       img.src = logoURL;
@@ -151,13 +156,13 @@ const InvoiceCreation = () => {
         doc.addImage(img, 'PNG', 150, 10, 50, 20);
 
         doc.setFontSize(24);
-        doc.setFont('FreeSerif', 'bold');
+        doc.setFont('FreeSerif', 'normal');
         doc.text('Invoice', startX, currentY);
 
         currentY += lineHeight * 3;
 
         doc.setFontSize(14);
-        doc.setFont('FreeSerif', 'bold');
+        doc.setFont('FreeSerif', 'normal');
         doc.text('Customer Information:', startX, currentY);
 
         currentY += lineHeight;
@@ -167,12 +172,25 @@ const InvoiceCreation = () => {
         doc.text(`E-mail: ${clientEmail}`, startX, currentY);
 
         currentY += lineHeight * 2;
-        doc.setFont('FreeSerif', 'bold');
+        doc.setFont('FreeSerif', 'normal');
         doc.text('Service Information:', startX, currentY);
 
         currentY += lineHeight;
         doc.setFont('FreeSerif', 'normal');
-        doc.text(`Amount: ${amount} ${currency}`, startX, currentY);
+        doc.text(`Amount: ${formatAmount(amount)} ${currency}`, startX, currentY);
+
+        if (discount) {
+          currentY += lineHeight;
+          doc.text(`Discount: ${discount}%`, startX, currentY);
+
+          // Include discounted amount only if discount is provided
+          currentY += lineHeight;
+          doc.text(`Discounted Amount: ${formatAmount(finalAmountCalculated)} ${currency}`, startX, currentY);
+        }
+
+        currentY += lineHeight * 2;
+        doc.setFont('FreeSerif', 'normal');
+        doc.text(`Final Amount: ${formatAmount(finalAmountCalculated)} ${currency}`, startX, currentY);
 
         currentY += lineHeight;
         doc.text(`Issue Date: ${issueDate}`, startX, currentY);
@@ -195,23 +213,10 @@ const InvoiceCreation = () => {
           doc.text(`Tax Information: ${taxInfo}`, startX, currentY);
         }
 
-        if (discount) {
-          currentY += lineHeight;
-          doc.text(`Discount: ${discount}%`, startX, currentY);
-
-          // Include discounted amount only if discount is provided
-          currentY += lineHeight;
-          doc.text(`Discounted Amount: ${finalAmountCalculated} ${currency}`, startX, currentY);
-        }
-
         if (notes) {
           currentY += lineHeight;
           doc.text(`Notes: ${notes}`, startX, currentY);
         }
-
-        currentY += lineHeight * 2;
-        doc.setFont('FreeSerif', 'bold');
-        doc.text(`Final Amount: ${finalAmountCalculated} ${currency}`, startX, currentY);
 
         currentY += lineHeight * 2;
         doc.setFontSize(12);
@@ -333,8 +338,8 @@ const InvoiceCreation = () => {
               <input
                 type="text"
                 placeholder="Amount"
-                value={formatAmount(amount)}
-                onChange={handleAmountChange}
+                value={formatAmount(amount)} // Format the amount with dots
+                onChange={handleAmountChange} // Handle changes to the amount
                 required
               />
             </div>
@@ -403,7 +408,7 @@ const InvoiceCreation = () => {
             />
           </div>
 
-          <p>Total Amount: {finalAmount} {currency}</p>
+          <p>Total Amount: {formatAmount(finalAmount)} {currency}</p>
 
           <div className="form-group">
             <label>Notes and Explanations</label>

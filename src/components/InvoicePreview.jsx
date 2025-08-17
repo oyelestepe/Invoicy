@@ -33,14 +33,14 @@ const InvoicePreview = ({ invoice }) => {
 
         // Title
         doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.text('INVOICE', startX, currentY);
 
         currentY += lineHeight * 3;
 
         // Customer Information
         doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.text('Customer Information:', startX, currentY);
 
         currentY += lineHeight;
@@ -52,7 +52,7 @@ const InvoicePreview = ({ invoice }) => {
         currentY += lineHeight * 2;
 
         // Service Information
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.text('Service Information:', startX, currentY);
 
         currentY += lineHeight;
@@ -99,7 +99,7 @@ const InvoicePreview = ({ invoice }) => {
         currentY += lineHeight * 2;
 
         // Footer
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.text(`Total Amount: ${formatAmount(invoice.finalAmount || invoice.amount)} ${invoice.currency}`, startX, currentY);
 
         currentY += lineHeight * 2;
