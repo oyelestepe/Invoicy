@@ -19,9 +19,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
-  background-color: #222831;
-  position: relative;
+  background-color: #eeeeee;
+  border-radius: 50px;
+  padding: 10px 30px;
+  width: 90%;
+  margin: 20px auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 5;
 }
 
 .navbar-logo {
@@ -45,12 +49,12 @@ body {
   font-family: 'Open Sans', sans-serif;
   font-size: 16px;
   font-weight: bold;
-  color: #fff;
+  color: #333;
   background-image: linear-gradient(
     to right,
     #e9cd44,
     #e9cd44 50%,
-    #fff 50%
+    #333 50%
   );
   background-size: 200% 100%;
   background-position: -100%;
@@ -101,7 +105,7 @@ body {
   display: none;
   background: none;
   border: none;
-  color: white;
+  color: #333;
   font-size: 24px;
   cursor: pointer;
 }
@@ -142,25 +146,33 @@ body {
 /* HERO */
 .hero-container {
   color: #d8dfe9;
-  height: 60vh;
+  height: 70vh;
   text-align: center;
-  padding: 100px 20px;
-  background-image: url('hero-bg.png'); 
+  padding: 100px 400px;
+  background: linear-gradient(to bottom, #3a7bd5 0%, #ffffff 100%);
   background-size: cover;
-  background-position: center;
+  background-position: bottom;
   background-repeat: no-repeat;
-  
 }
 
 .hero-container h1 {
   color: #374151;
-  font-size: 3rem;
+  font-size: 4rem;
   margin-bottom: 20px;
 }
 
+.hero-span{
+  background: #226EE9;
+  background: linear-gradient(to bottom right, #226EE9 5%, #2660BC 28%, #467AFF 49%, #2E38FC 91%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .hero-container p {
-  font-size: 1.2rem;
+  font-size: 1rem;
+  color: rgb(177, 177, 177);
   margin-bottom: 30px;
+  padding: 0px 150px;
 }
 
 .hero-buttons {
@@ -505,3 +517,4 @@ p {
   background-color: #d6b71d;
 }
 /* Price Section */
+
