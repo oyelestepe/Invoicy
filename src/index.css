@@ -10,16 +10,29 @@ h2{
 body {
   font-family: 'Arial', sans-serif;
   line-height: 1.6;
-  background-color: #f4f4f9; 
 }
 
+.hero-wrapper {
+   min-height: 80vh; /* Ensure it covers the whole screen height */
+    width: 100%;
+    background-color: #ffffff; /* Base White */
+    background-image: 
+    radial-gradient(
+      circle at 50% 10%, 
+      rgba(170, 187, 255, 0.7) 0%, 
+      rgba(255, 255, 255, 0) 50%, 
+      #ffffff 75%
+    ); 
+  background-repeat: repeat, no-repeat;
+  background-size: auto, cover; 
+}
 /* Navbar */
 
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #eeeeee;
+  background-color: transparent;
   border-radius: 50px;
   padding: 10px 30px;
   width: 90%;
@@ -149,10 +162,6 @@ body {
   height: 70vh;
   text-align: center;
   padding: 100px 400px;
-  background: linear-gradient(to bottom, #3a7bd5 0%, #ffffff 100%);
-  background-size: cover;
-  background-position: bottom;
-  background-repeat: no-repeat;
 }
 
 .hero-container h1 {
