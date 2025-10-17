@@ -12,20 +12,6 @@ body {
   line-height: 1.6;
 }
 
-.hero-wrapper {
-   min-height: 80vh; /* Ensure it covers the whole screen height */
-    width: 100%;
-    background-color: #ffffff; /* Base White */
-    background-image: 
-    radial-gradient(
-      circle at 50% 10%, 
-      rgba(170, 187, 255, 0.7) 0%, 
-      rgba(255, 255, 255, 0) 50%, 
-      #ffffff 75%
-    ); 
-  background-repeat: repeat, no-repeat;
-  background-size: auto, cover; 
-}
 /* Navbar */
 
 .navbar {
@@ -157,6 +143,39 @@ body {
 /* Navbar */
 
 /* HERO */
+.hero-wrapper {
+  position: relative;
+  min-height: 80vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+/* Circular gradient reaching the middle of hero */
+.floating-bg {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 180%;
+  height: 100%;
+  background: radial-gradient(
+    circle at center top,
+    rgba(120, 160, 255, 0.5) 0%,
+    rgba(220, 230, 255, 0.3) 40%,
+    transparent 80%
+  );
+  transform: translateX(-50%);
+  filter: blur(80px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-wrapper > *:not(.floating-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+/* HERO CONTENT */
 .hero-container {
   color: #d8dfe9;
   height: 70vh;
@@ -170,9 +189,8 @@ body {
   margin-bottom: 20px;
 }
 
-.hero-span{
-  background: #226EE9;
-  background: linear-gradient(to bottom right, #226EE9 5%, #2660BC 28%, #467AFF 49%, #2E38FC 91%);
+.hero-span {
+  background: linear-gradient(to bottom right, #226ee9 5%, #2660bc 28%, #467aff 49%, #2e38fc 91%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -190,7 +208,8 @@ body {
   gap: 20px;
 }
 
-.cta-button, .demo-button {
+.cta-button,
+.demo-button {
   padding: 15px 30px;
   font-size: 1rem;
   border: none;
@@ -216,6 +235,7 @@ body {
 .demo-button:hover {
   background-color: #45a049;
 }
+
 /* HERO */
 
 /* Features */
