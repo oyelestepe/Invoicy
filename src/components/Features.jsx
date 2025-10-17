@@ -1,9 +1,7 @@
 import React, { useEffect, useRef } from "react";
-import { FaBolt } from "react-icons/fa6";
-import { BiMailSend } from "react-icons/bi";
-import { FaFileDownload } from "react-icons/fa";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import "./componentsCss/Feature.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -11,6 +9,7 @@ const Features = () => {
   const featuresRef = useRef(null);
 
   useEffect(() => {
+    // Scroll animation for features
     gsap.from(".feature", {
       opacity: 0,
       y: 50,
@@ -28,7 +27,16 @@ const Features = () => {
     <div className="features-container" ref={featuresRef}>
       <div className="feature">
         <div className="feature-icon">
-          <FaBolt color="#e9cd44" />
+         <img 
+          src="/videos/lightning.gif" 
+          alt="Lightning" 
+          style={{
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
+            objectFit: 'cover',
+          }} 
+        />
         </div>
         <div className="feature-content">
           <h3>Easy to Use</h3>
@@ -37,8 +45,17 @@ const Features = () => {
       </div>
 
       <div className="feature">
-        <div className="feature-icon">
-          <BiMailSend color="#4d80c4" />
+        <div className="feature-icon" ref={(el) => (iconRefs.current[1] = el)}>
+          <img 
+            src="/videos/mail.gif" 
+            alt="Lightning" 
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              objectFit: 'cover',
+            }} 
+          />
         </div>
         <div className="feature-content">
           <h3>Send an E-mail</h3>
@@ -47,8 +64,17 @@ const Features = () => {
       </div>
 
       <div className="feature">
-        <div className="feature-icon">
-          <FaFileDownload color="#ff6347" />
+        <div className="feature-icon" ref={(el) => (iconRefs.current[2] = el)}>
+          <img 
+            src="/videos/pdf.gif" 
+            alt="Lightning" 
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              objectFit: 'cover',
+            }} 
+          />
         </div>
         <div className="feature-content">
           <h3>Download as PDF</h3>
