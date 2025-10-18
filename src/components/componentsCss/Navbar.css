@@ -1,0 +1,127 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: transparent;
+  border-radius: 50px;
+  padding: 10px 30px;
+  width: 90%;
+  margin: 20px auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+}
+
+.navbar-logo {
+  height: 50px; 
+  width: auto; 
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  transition: all 0.3s ease-in-out;
+}
+
+.navbar-links li {
+  margin: 0 20px;
+}
+
+.navbar-links a {
+  text-decoration: none;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  background-image: linear-gradient(
+    to right,
+    #2660bc,
+    #467aff 50%,
+    #333 50%
+  );
+  background-size: 200% 100%;
+  background-position: -100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+}
+
+.navbar-links a::before {
+  content: '';
+  display: block;
+  width: 0;
+  height: 3px;
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  background: #2660bc;
+  transition: all 0.3s ease-in-out;
+}
+
+.navbar-links a:hover {
+  background-position: 0%;
+}
+
+.navbar-links a:hover::before {
+  width: 100%;
+}
+
+.logout-button {
+  background-color: #ef4444;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #dc2626;
+}
+
+/* Hamburger Menu */
+.hamburger-menu {
+  display: none;
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.hamburger-menu:focus {
+  outline: none;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .navbar-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #222831;
+    width: 100%;
+    padding: 20px 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .navbar-links.active {
+    display: flex;
+  }
+
+  .navbar-links li {
+    margin: 10px 0;
+  }
+
+  .hamburger-menu {
+    display: block;
+  }
+}
+
+/* Navbar */

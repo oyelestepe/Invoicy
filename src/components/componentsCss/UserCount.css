@@ -1,0 +1,24 @@
+/* User Count Section */
+.user-count-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 50px;
+  padding: 50px 20px;
+  background-color: #f4f4f9;
+  text-align: center;
+}
+
+.user-count-item h2 {
+  font-size: 3rem;
+  color: transparent;
+  background-image: linear-gradient(to bottom right, #226ee9 5%, #2660bc 28%, #467aff 49%, #2e38fc 91%);
+  background-clip: text;
+  margin-bottom: 10px;
+}
+
+.user-count-item p {
+  font-size: 1.2rem;
+  color: #555;
+}
+/* User Count Section */

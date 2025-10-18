@@ -1,0 +1,53 @@
+.how-it-works {
+  padding: 50px 20px;
+  background-color: #f4f4f9;
+}
+
+.how-it-works-title{
+  font-size: 2rem;
+  margin-left: 100px;
+  margin-bottom: 10px;
+}
+
+.how-it-works-subtitle{
+  font-size: 1.2rem;
+  color: #777;
+  margin-left: 100px;
+  margin-bottom: 30px;
+}
+
+.how-it-works p {
+  color: #777;
+  font-size: 1rem;
+  margin-bottom: 30px;
+}
+
+.steps-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.step {
+  width: 300px;
+  vertical-align: top;
+  margin-bottom: 40px;
+}
+
+.step-number{
+  font-size: 8rem;
+  margin-bottom: 0;
+  color: transparent;
+  background-image: linear-gradient(to bottom right, #226ee9 5%, #2660bc 28%, #467aff 49%, #2e38fc 91%);
+  background-clip: text;
+}
+
+.step h3 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.step p {
+  color: #777;
+  font-size: 1rem;
+}
