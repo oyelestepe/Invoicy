@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { FaBars, FaTimes } from 'react-icons/fa'; // Import icons for the hamburger menu
+import './componentsCss/Navbar.css'
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

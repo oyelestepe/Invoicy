@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { FaStar } from 'react-icons/fa';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import './componentsCss/CustomerReview.css'
 
 gsap.registerPlugin(ScrollTrigger);
 

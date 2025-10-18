@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { jsPDF } from 'jspdf';
-import { FreeSerifBase64 } from './FreeSerifBase64'; // Adjust the import based on your file structure
+import { FreeSerifBase64 } from './FreeSerifBase64';
+import './componentsCss/InvoicePreview.css'
 
-// Add this function:
 const formatAmount = (value) => {
   if (value === undefined || value === null) return '';
   const strValue = typeof value === 'number' ? value.toString() : value;
@@ -17,7 +17,7 @@ const InvoicePreview = ({ invoice }) => {
       const doc = new jsPDF();
       doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
       doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
-      doc.setFont('FreeSerif', 'normal'); // Specify style
+      doc.setFont('FreeSerif', 'normal');
 
       const margin = 20;
       const lineHeight = 10;
@@ -25,11 +25,11 @@ const InvoicePreview = ({ invoice }) => {
       let currentY = margin;
 
       // Add the logo to the PDF
-      const logoURL = '/logo.png'; // Path to your logo file
+      const logoURL = '/logo.png'; 
       const img = new Image();
       img.src = logoURL;
       img.onload = () => {
-        doc.addImage(img, 'PNG', 150, 10, 50, 20); // Add the logo to the top-right corner
+        doc.addImage(img, 'PNG', 150, 10, 50, 20);
 
         // Title
         doc.setFontSize(24);

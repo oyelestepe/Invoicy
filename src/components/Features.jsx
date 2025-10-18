@@ -45,7 +45,7 @@ const Features = () => {
       </div>
 
       <div className="feature">
-        <div className="feature-icon" ref={(el) => (iconRefs.current[1] = el)}>
+        <div className="feature-icon">
           <img 
             src="/videos/mail.gif" 
             alt="Lightning" 
@@ -64,7 +64,7 @@ const Features = () => {
       </div>
 
       <div className="feature">
-        <div className="feature-icon" ref={(el) => (iconRefs.current[2] = el)}>
+        <div className="feature-icon">
           <img 
             src="/videos/pdf.gif" 
             alt="Lightning" 

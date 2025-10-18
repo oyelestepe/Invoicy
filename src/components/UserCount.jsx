@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import './componentsCss/UserCount.css'
 
 gsap.registerPlugin(ScrollTrigger);
 
