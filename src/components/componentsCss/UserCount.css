@@ -3,22 +3,27 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 50px;
-  padding: 50px 20px;
-  background-color: #f4f4f9;
+  gap: 80px;
+  padding: 80px 20px;
+  background-color: transparent;
   text-align: center;
+  flex-wrap: wrap;
 }
 
 .user-count-item h2 {
-  font-size: 3rem;
+  font-size: 4rem;
+  font-weight: 800;
   color: transparent;
-  background-image: linear-gradient(to bottom right, #226ee9 5%, #2660bc 28%, #467aff 49%, #2e38fc 91%);
+  background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+  -webkit-background-clip: text;
   background-clip: text;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  line-height: 1;
 }
 
 .user-count-item p {
-  font-size: 1.2rem;
-  color: #555;
+  font-size: 1.25rem;
+  color: var(--text-gray);
+  font-weight: 500;
 }
 /* User Count Section */

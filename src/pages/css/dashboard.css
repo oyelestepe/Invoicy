@@ -2,9 +2,12 @@
   max-width: 800px;
   margin: 2rem auto;
   padding: 1.5rem;
-  background: #fff;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--glass-shadow);
   transition: all 0.3s ease;
 }
 
@@ -12,18 +15,18 @@
   text-align: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #f3f4f6;
+  border-bottom: 2px solid var(--glass-border);
 }
 
 .dashboard-header h1 {
   font-size: 2rem;
-  color: #1f2937;
+  color: var(--text-light);
   letter-spacing: -0.025em;
 }
 
 h2 {
   font-size: 1.5rem;
-  color: #374151;
+  color: var(--text-gray);
   margin-bottom: 1.5rem;
   font-weight: 600;
 }
@@ -38,29 +41,29 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f9fafb;
+  background: rgba(255,255,255,0.5);
   padding: 1.25rem;
   margin-bottom: 0.75rem;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--glass-border);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .invoice-item:hover {
   background: #fff;
-  border-color: #3b82f6;
-  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary);
+  box-shadow: var(--glass-shadow);
 }
 
 .invoice-item strong {
-  color: #111827;
+  color: var(--text-light);
   font-size: 1rem;
   display: block;
   margin-bottom: 0.5rem;
 }
 
 .invoice-item a {
-  color: #3b82f6;
+  color: var(--primary);
   text-decoration: none;
   font-weight: 500;
   font-size: 0.875rem;
@@ -70,7 +73,7 @@ h2 {
 }
 
 .invoice-item a:hover {
-  color: #2563eb;
+  color: var(--accent);
   text-decoration: underline;
 }
 
@@ -101,7 +104,7 @@ h2 {
 
 .pagination-buttons button {
   padding: 0.5rem 1.25rem;
-  background-color: #3b82f6;
+  background-color: var(--primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -111,7 +114,7 @@ h2 {
 }
 
 .pagination-buttons button:hover:not(:disabled) {
-  background-color: #2563eb;
+  filter: brightness(1.1);
   transform: translateY(-1px);
 }
 
