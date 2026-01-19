@@ -1,0 +1,73 @@
+.partners-section {
+    padding: 3rem 0;
+    overflow: hidden;
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Subtle divider */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.partners-title p {
+    color: var(--text-gray);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.logos-marquee {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.marquee-content {
+    display: flex;
+    gap: 4rem;
+    width: max-content;
+    animation: scroll 40s linear infinite;
+}
+
+.partner-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.partner-logo:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.partner-logo span {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-light); /* Uses premium dark slate */
+    font-family: 'Outfit', sans-serif;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-33.33%); /* Scroll 1/3 since we have 3 sets */
+    }
+}
+
+@media (max-width: 768px) {
+    .marquee-content {
+        gap: 2rem;
+    }
+    .partner-logo span {
+        font-size: 1.2rem;
+    }
+}
