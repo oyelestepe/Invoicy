@@ -1,0 +1,128 @@
+.problem-solution-section {
+    padding: 6rem 2rem;
+    background-color: var(--bg-dark);
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.ps-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    max-width: 1200px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.ps-card {
+    flex: 1;
+    min-width: 300px;
+    padding: 2.5rem;
+    border-radius: 20px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    color: var(--text-light);
+    transition: transform 0.3s ease;
+    cursor: default;
+    box-shadow: var(--glass-shadow);
+}
+
+.ps-card:hover {
+    transform: translateY(-5px);
+}
+
+.ps-card.problem:hover {
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 10px 30px -10px rgba(239, 68, 68, 0.1);
+}
+
+.ps-card.solution {
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.ps-card.solution:hover {
+    border-color: var(--primary);
+    box-shadow: 0 10px 30px -10px var(--primary-glow);
+}
+
+.icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+}
+
+.problem-icon {
+    background: rgba(255, 87, 87, 0.1);
+    color: #ef4444;
+}
+
+.solution-icon {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+}
+
+.ps-card h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.ps-card p {
+    color: var(--text-gray);
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.ps-list {
+    list-style: none;
+    padding: 0;
+}
+
+.ps-list li {
+    margin-bottom: 0.8rem;
+    position: relative;
+    padding-left: 1.5rem;
+    color: var(--text-light);
+}
+
+.ps-card.problem .ps-list li::before {
+    content: "•";
+    color: #ef4444;
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.ps-card.solution .ps-list li::before {
+    content: "✓";
+    color: var(--accent);
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.ps-arrow {
+    font-size: 3rem;
+    color: var(--text-gray);
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .ps-container {
+        flex-direction: column;
+        gap: 2rem;
+    }
+    .ps-arrow {
+        transform: rotate(90deg);
+    }
+}
