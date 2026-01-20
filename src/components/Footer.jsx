@@ -8,11 +8,13 @@ import './componentsCss/Footer.css'
 const Footer = () => {
   return (
     <div className="footer-container">
-      <a href='#'><FaInstagram className='footer-icon'/></a>
-      <a href='#'><FaXTwitter className='footer-icon'/></a>
-      <a href='#'><FaLinkedin className='footer-icon'/></a>
-      <a href='#'><FaYoutube className='footer-icon'/></a>
-      <p>&copy; 2025 Invoice Generator. All rights reserved.</p>
+      <div className='footer-icons'>
+        <a href='#'><FaInstagram className='footer-icon'/></a>
+        <a href='#'><FaXTwitter className='footer-icon'/></a>
+        <a href='#'><FaLinkedin className='footer-icon'/></a>
+        <a href='#'><FaYoutube className='footer-icon'/></a>
+      </div>
+      <p>&copy; 2026 Invoicy. All rights reserved.</p>
     </div>
   );
 };
