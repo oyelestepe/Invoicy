@@ -1,27 +1,37 @@
 .hero-container {
-  color: #d8dfe9;
-  height: 70vh;
+  color: var(--text-body);
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
-  padding: 100px 400px;
+  padding: 120px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .hero-container h1 {
-  color: #374151;
-  font-size: 4rem;
-  margin-bottom: 20px;
+  color: var(--text-light);
+  font-size: 5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 24px;
+  letter-spacing: -0.03em;
 }
 
 .hero-span {
-  background: linear-gradient(to bottom right, #226ee9 5%, #2660bc 28%, #467aff 49%, #2e38fc 91%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  /* Clean professional blue text instead of gradient */
+  color: var(--primary);
+  display: inline-block;
 }
 
 .hero-container p {
-  font-size: 1rem;
-  color: rgb(177, 177, 177);
-  margin-bottom: 30px;
-  padding: 0px 150px;
+  font-size: 1.25rem;
+  color: var(--text-gray);
+  margin-bottom: 48px;
+  max-width: 600px;
+  line-height: 1.6;
 }
 
 .hero-buttons {
@@ -32,28 +42,45 @@
 
 .cta-button,
 .demo-button {
-  padding: 15px 30px;
-  font-size: 1rem;
+  padding: 18px 40px;
+  font-size: 1.1rem;
+  font-weight: 600;
   border: none;
   cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
+  border-radius: 8px; /* Slightly more structural roundedness */
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .cta-button {
-  background-color: #e9cd44;
+  background-color: var(--primary);
   color: white;
-}
-
-.demo-button {
-  background-color: #4caf50;
-  color: white;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); /* Soft blue shadow */
 }
 
 .cta-button:hover {
-  background-color: #d6b71d;
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px -1px rgba(37, 99, 235, 0.3);
+}
+
+.demo-button {
+  background-color: white;
+  color: var(--text-light);
+  border: 1px solid var(--border-medium);
 }
 
 .demo-button:hover {
-  background-color: #45a049;
+  background-color: var(--bg-secondary);
+  border-color: var(--border-light);
+}
+
+@media (max-width: 768px) {
+  .hero-container h1 {
+    font-size: 3rem;
+  }
+  .hero-container {
+    padding: 100px 20px;
+  }
 }
