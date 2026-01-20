@@ -1,145 +1,107 @@
-import React, { useEffect, useState } from 'react';
-import { jsPDF } from 'jspdf';
-import { FreeSerifBase64 } from './FreeSerifBase64';
-import './componentsCss/InvoicePreview.css'
+import React, { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import './componentsCss/InvoicePreview.css';
 
-const formatAmount = (value) => {
-  if (value === undefined || value === null) return '';
-  const strValue = typeof value === 'number' ? value.toString() : value;
-  return strValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-};
+gsap.registerPlugin(ScrollTrigger);
 
-const InvoicePreview = ({ invoice }) => {
-  const [pdfUrl, setPdfUrl] = useState('');
+const InvoicePreview = () => {
+  const containerRef = useRef(null);
+  const invoiceRef = useRef(null);
 
   useEffect(() => {
-    const generatePdfPreview = async () => {
-      const doc = new jsPDF();
-      doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
-      doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
-      doc.setFont('FreeSerif', 'normal');
-
-      const margin = 20;
-      const lineHeight = 10;
-      const startX = margin;
-      let currentY = margin;
-
-      // Add the logo to the PDF
-      const logoURL = '/logo.png'; 
-      const img = new Image();
-      img.src = logoURL;
-      img.onload = () => {
-        doc.addImage(img, 'PNG', 150, 10, 50, 20);
-
-        // Title
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'normal');
-        doc.text('INVOICE', startX, currentY);
-
-        currentY += lineHeight * 3;
-
-        // Customer Information
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Customer Information:', startX, currentY);
-
-        currentY += lineHeight;
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Name: ${invoice.clientName}`, startX, currentY);
-        currentY += lineHeight;
-        doc.text(`Email: ${invoice.clientEmail}`, startX, currentY);
-
-        currentY += lineHeight * 2;
-
-        // Service Information
-        doc.setFont('helvetica', 'normal');
-        doc.text('Service Information:', startX, currentY);
-
-        currentY += lineHeight;
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Amount: ${formatAmount(invoice.amount)} ${invoice.currency}`, startX, currentY);
-
-        currentY += lineHeight;
-        doc.text(`Issue Date: ${invoice.issueDate}`, startX, currentY);
-
-        currentY += lineHeight;
-        doc.text(`Due Date: ${invoice.dueDate}`, startX, currentY);
-
-        // Optional Fields
-        if (invoice.serviceDescription) {
-          currentY += lineHeight;
-          doc.text(`Description: ${invoice.serviceDescription}`, startX, currentY);
+    gsap.fromTo(
+      invoiceRef.current,
+      { rotateX: 20, y: 100, opacity: 0 },
+      {
+        rotateX: 0,
+        y: 0,
+        opacity: 1,
+        duration: 1.2,
+        ease: 'power3.out',
+        scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'top 75%',
         }
-
-        if (invoice.invoiceNumber) {
-          currentY += lineHeight;
-          doc.text(`Invoice Number: ${invoice.invoiceNumber}`, startX, currentY);
-        }
-
-        if (invoice.taxInfo) {
-          currentY += lineHeight;
-          doc.text(`Tax Information: ${invoice.taxInfo}`, startX, currentY);
-        }
-
-        // Include discount and discounted amount only if discount > 0
-        if (invoice.discount > 0) {
-          currentY += lineHeight;
-          doc.text(`Discount: ${invoice.discount}%`, startX, currentY);
-
-          const discountedAmount = (invoice.amount - (invoice.amount * (invoice.discount / 100))).toFixed(2);
-          currentY += lineHeight;
-          doc.text(`Discounted Amount: ${formatAmount(discountedAmount)} ${invoice.currency}`, startX, currentY);
-        }
-
-        if (invoice.notes) {
-          currentY += lineHeight;
-          doc.text(`Notes: ${invoice.notes}`, startX, currentY);
-        }
-
-        currentY += lineHeight * 2;
-
-        // Footer
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Total Amount: ${formatAmount(invoice.finalAmount || invoice.amount)} ${invoice.currency}`, startX, currentY);
-
-        currentY += lineHeight * 2;
-        doc.setFontSize(12);
-        doc.setTextColor(100);
-        doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
-
-        // Generate PDF URL
-        const pdfBlob = doc.output('blob');
-        const newPdfUrl = URL.createObjectURL(pdfBlob);
-
-        setPdfUrl((prevUrl) => {
-          if (prevUrl) {
-            URL.revokeObjectURL(prevUrl);
-          }
-          return newPdfUrl;
-        });
-      };
-    };
-
-    if (invoice) {
-      generatePdfPreview();
-    }
-  }, [invoice]);
+      }
+    );
+  }, []);
 
   return (
-    <div className="invoice-preview">
-      <h3>Invoice Preview</h3>
-      {pdfUrl ? (
-        <iframe
-          src={pdfUrl}
-          title="Invoice Preview"
-          width="100%"
-          height="600px"
-          style={{ border: 'none' }}
-        ></iframe>
-      ) : (
-        <p>Loading preview...</p>
-      )}
-    </div>
+    <section className="preview-section" ref={containerRef}>
+      <div className="preview-text">
+        <h2>Beautiful Invoices, Ready to Send</h2>
+        <p>Your invoices reflect your brand. Make them count.</p>
+      </div>
+
+      <div className="invoice-mockup-wrapper">
+        <div className="invoice-mockup" ref={invoiceRef}>
+            {/* Header Mock - Matching Email Template */}
+            <div className="inv-header">
+                <div className="inv-header-content">
+                    <div className="inv-top-row">
+                        <span className="inv-label">TOTAL DUE</span>
+                        <span className="inv-brand">INVOICY</span>
+                    </div>
+                    <div className="inv-main-row">
+                        <span className="inv-amount">₺10.500,00</span>
+                        <span className="inv-number">#INV-2026-001</span>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Body Mock */}
+            <div className="inv-body">
+                {/* Client & Dates Row */}
+                <div className="inv-meta-row">
+                    <div className="inv-meta-col">
+                        <span className="inv-meta-label">CLIENT</span>
+                        <span className="inv-meta-value">Acme Corp Ltd.</span>
+                    </div>
+                    <div className="inv-meta-col center">
+                        <span className="inv-meta-label">INVOICE DATE</span>
+                        <span className="inv-meta-value">18 Jan 2026</span>
+                    </div>
+                    <div className="inv-meta-col right">
+                        <span className="inv-meta-label">DUE DATE</span>
+                        <span className="inv-meta-value">25 Jan 2026</span>
+                    </div>
+                </div>
+
+                {/* Description Table Mock */}
+                <div className="inv-table">
+                    <div className="inv-table-header">
+                        <span>DESCRIPTION</span>
+                        <span>AMOUNT</span>
+                    </div>
+                    <div className="inv-table-row">
+                        <span>Web Development Services</span>
+                        <span className="bold">₺10.500,00</span>
+                    </div>
+                </div>
+
+                {/* Totals Mock */}
+                <div className="inv-totals-section">
+                    <div className="inv-total-row">
+                        <span>Subtotal</span>
+                        <span>₺10.500,00</span>
+                    </div>
+                    <div className="inv-total-row final">
+                        <span>Total</span>
+                        <span>₺10.500,00</span>
+                    </div>
+                </div>
+            </div>
+            {/* Footer Note */}
+            <div className="inv-footer">
+                <p>Thank you for your business!</p>
+            </div>
+        </div>
+        
+        {/* Glow effect behind */}
+        <div className="preview-glow"></div>
+      </div>
+    </section>
   );
 };
 
