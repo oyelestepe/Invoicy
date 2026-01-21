@@ -56,34 +56,42 @@ const CustomerReview = () => {
   const reviewsContainerRef = useRef(null);
 
   useEffect(() => {
-    gsap.from('.review-card', {
-      opacity: 0,
-      y: -50,
-      rotation: () => (Math.random() - 0.5) * 20, 
-      duration: 1,
-      ease: 'power2.out',
-      stagger: 0.2,
-      scrollTrigger: {
-        trigger: reviewsContainerRef.current,
-        start: 'top 80%',
-      },
-    });
+    gsap.fromTo('.review-card', 
+      { y: -50, autoAlpha: 0, rotation: () => (Math.random() - 0.5) * 20 },
+      {
+        y: 0,
+        autoAlpha: 1,
+        rotation: 0,
+        duration: 1,
+        ease: 'power2.out',
+        stagger: 0.2,
+        scrollTrigger: {
+          trigger: reviewsContainerRef.current,
+          start: 'top 85%',
+        },
+      }
+    );
   }, []);
 
   return (
     <div className="customer-review-section">
-      <div className="image-container">
-        <img src="/bg-3.webp" alt="Background" className="background-image" />
+      <div className="reviews-header">
+        <h2>Loved by Businesses Everywhere</h2>
+        <p>See what our customers have to say about Invoicy.</p>
       </div>
       <div className="reviews-container" ref={reviewsContainerRef}>
         {reviews.map((review) => (
           <div key={review.id} className="review-card">
-            <img src={review.profilePic} alt={`${review.name}'s profile`} className="profile-pic" />
-            <h3>{review.name}</h3>
-            <div className="stars">
-              {[...Array(review.rating)].map((_, i) => (
-                <FaStar key={i} color="#FFD700" />
-              ))}
+            <div className="review-header">
+              <img src={review.profilePic} alt={`${review.name}'s profile`} className="profile-pic" />
+              <div>
+                <h3>{review.name}</h3>
+                <div className="stars">
+                  {[...Array(review.rating)].map((_, i) => (
+                    <FaStar key={i} size={14} color="#FFD700" />
+                  ))}
+                </div>
+              </div>
             </div>
             <p>{review.review}</p>
           </div>
