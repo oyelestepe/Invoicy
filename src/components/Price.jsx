@@ -4,71 +4,79 @@ import { gsap } from "gsap";
 import "./componentsCss/Price.css";
 
 const Price = () => {
-  const cardRef = useRef(null);
   const containerRef = useRef(null);
+  const cardsRef = useRef([]);
 
   useEffect(() => {
-  const card = cardRef.current;
+    gsap.fromTo(cardsRef.current, 
+        { y: 50, autoAlpha: 0 },
+        {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.8,
+            stagger: 0.2,
+            ease: "power2.out",
+            scrollTrigger: {
+                trigger: containerRef.current,
+                start: "top 85%",
+            }
+        }
+    );
+  }, []);
 
-  const handleMouseMove = (e) => {
-    const rect = card.getBoundingClientRect();
-    const xAxis = (rect.width / 2 - (e.clientX - rect.left)) / 80;
-    const yAxis = (rect.height / 2 - (e.clientY - rect.top)) / 80;
-
-    gsap.to(card, {
-      rotationY: -xAxis,
-      rotationX: yAxis,
-      scale: 1.03,
-      transformPerspective: 600,
-      transformOrigin: "center",
-      ease: "power2.out",
-      duration: 0.3,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    gsap.to(card, {
-      rotationY: 0,
-      rotationX: 0,
-      scale: 1,
-      duration: 0.6,
-      ease: "power3.out",
-    });
-  };
-
-  card.addEventListener("mousemove", handleMouseMove);
-  card.addEventListener("mouseleave", handleMouseLeave);
-
-  return () => {
-    card.removeEventListener("mousemove", handleMouseMove);
-    card.removeEventListener("mouseleave", handleMouseLeave);
-  };
-}, []);
-
+  const plans = [
+    {
+        name: "Lifetime Access",
+        price: "$39.99",
+        period: "/one-time",
+        desc: "Pay once, own it forever. No monthly fees.",
+        features: [
+            "Unlimited Invoices", 
+            "Unlimited Clients",
+            "PDF Export & Emailing", 
+            "Premium Dashboard",
+            "Lifetime Updates",
+            "24/7 Priority Support"
+        ],
+        cta: "Get Lifetime Access",
+        highlight: true
+    }
+  ];
 
   return (
     <div className="price-container" ref={containerRef}>
-      <div className="price-section" ref={cardRef}>
-        <h2 className="price-title">One-Time Payment, Lifetime Access! 💥</h2>
-        <p className="price-description">
-          🚀 Unlock Unlimited Invoicing Power for Just{" "}
-          <strong>$39.99</strong> — No subscriptions, no hidden fees—just one
-          payment for lifetime access to our premium tool.
-        </p>
-        <ul className="price-features">
-          <li>✅ Generate Unlimited Invoices – Never worry about limits again!</li>
-          <li>
-            ✅ Download as PDF & Send Instantly – Professional, ready-to-share
-            invoices in seconds.
-          </li>
-          <li>✅ No Recurring Fees – Pay once, use forever—zero extra costs!</li>
-          <li>✅ 24/7 Access – Create and manage invoices anytime, anywhere.</li>
-        </ul>
-        <div className="price-buttons">
-          <Link to="/pricing">
-            <button className="cta-button">Get Lifetime Access</button>
-          </Link>
-        </div>
+      <div className="price-header">
+        <h2 className="price-main-title">Simple, Transparent Pricing</h2>
+        <p className="price-sub-desc">Choose the plan that fits your business needs.</p>
+      </div>
+      
+      <div className="price-grid">
+        {plans.map((plan, index) => (
+            <div 
+                key={index} 
+                className={`price-card ${plan.highlight ? 'highlighted' : ''}`}
+                ref={el => cardsRef.current[index] = el}
+            >
+                {plan.highlight && <div className="popular-badge">BEST VALUE</div>}
+                <h3>{plan.name}</h3>
+                <div className="price-amount">
+                    {plan.price}<span className="period">{plan.period}</span>
+                </div>
+                <p className="plan-desc">{plan.desc}</p>
+                
+                <ul className="price-features-list">
+                    {plan.features.map((feature, i) => (
+                        <li key={i}>{feature}</li>
+                    ))}
+                </ul>
+                
+                <Link to="/pricing" className="price-btn-link">
+                    <button className={`price-cta ${plan.highlight ? 'highlight-btn' : ''}`}>
+                        {plan.cta}
+                    </button>
+                </Link>
+            </div>
+        ))}
       </div>
     </div>
   );
