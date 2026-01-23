@@ -5,7 +5,7 @@ import { db, auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
 import { jsPDF } from 'jspdf';
-import InvoicePreview from '../components/InvoicePreview';
+import html2canvas from 'html2canvas';
 import './css/invoiceDetails.css';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
 import { FreeSerifBase64 } from '../components/FreeSerifBase64';
@@ -34,8 +34,48 @@ const InvoiceDetails = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [emailPreviewHtml, setEmailPreviewHtml] = useState(null);
 
   const navigate = useNavigate();
+
+  const fetchEmailPreview = async () => {
+    try {
+      if (!invoice) return;
+
+      const response = await fetch('http://localhost:5000/preview-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invoiceData: {
+            invoiceNumber: invoice.invoiceNumber,
+            clientName: invoice.clientName,
+            serviceDescription: invoice.serviceDescription,
+            finalAmount: invoice.finalAmount || invoice.amount, // fallback
+            amount: invoice.amount, // Subtotal
+            currency: invoice.currency,
+            issueDate: invoice.issueDate,
+            dueDate: invoice.dueDate,
+            taxInfo: invoice.taxInfo,
+            discount: invoice.discount,
+            notes: invoice.notes
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch preview');
+      }
+
+      const data = await response.json();
+      setEmailPreviewHtml(data.html);
+    } catch (error) {
+      console.error('Error fetching email preview:', error);
+      setModalMessage('Could not load email preview.');
+      setModalOpen(true);
+    }
+  };
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
@@ -60,10 +100,10 @@ const InvoiceDetails = () => {
           setServiceDescription(invoiceData.serviceDescription || '');
           setAmount(invoiceData.amount || '');
           setCurrency(invoiceData.currency || '');
-          setInvoiceNumber(invoiceData.invoiceNumber || 'Unknown');
+          setInvoiceNumber(invoiceData.invoiceNumber || '');
           setIssueDate(invoiceData.issueDate || '');
           setDueDate(invoiceData.dueDate || '');
-          setTaxInfo(invoiceData.taxInfo || 'Unknown');
+          setTaxInfo(invoiceData.taxInfo || '');
           setDiscount(invoiceData.discount || '');
           setNotes(invoiceData.notes || '');
           setFinalAmount(invoiceData.finalAmount || '');
@@ -85,9 +125,15 @@ const InvoiceDetails = () => {
 
   useEffect(() => {
     if (invoice) {
-      generatePDF(invoice);
+        fetchEmailPreview();
     }
   }, [invoice]);
+
+  useEffect(() => {
+    if (emailPreviewHtml) {
+        generatePDF(false);
+    }
+  }, [emailPreviewHtml]);
 
   const updateInvoice = async () => {
     try {
@@ -132,87 +178,76 @@ const InvoiceDetails = () => {
     }
   };
 
-const generatePDF = async (invoiceData) => {
-  try {
-    if (!invoiceData) throw new Error('Invoice data is missing');
+  const generatePDF = async (shouldDownload = false) => {
+    try {
+      if (!emailPreviewHtml) {
+        console.warn('Email preview HTML not ready yet.');
+        return;
+      }
 
-    const doc = new jsPDF();
-    doc.addFileToVFS('FreeSerif.ttf', FreeSerifBase64);
-    doc.addFont('FreeSerif.ttf', 'FreeSerif', 'normal');
-    doc.setFont('FreeSerif', 'normal');
+      const doc = new jsPDF('p', 'pt', 'a4');
+      const a4Width = 595.28;
+      const a4Height = 841.89;  // Not strictly used for single page scaling logic but good to know
+      const margin = 20;
 
-    const margin = 20;
-    const lineHeight = 10;
-    const startX = margin;
-    let currentY = margin;
+      // Create a temporary iframe to properly render the full HTML document
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.left = '-9999px';
+      // Set width to a standard email width (e.g., 600px - 800px) to ensure correct reflow
+      iframe.style.width = '800px'; 
+      iframe.style.height = 'auto';
+      document.body.appendChild(iframe);
 
-    const logoURL = '/logo.png';
-    const img = new window.Image();
-    img.src = logoURL;
+      // Write the HTML content to the iframe
+      const iframeDoc = iframe.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(emailPreviewHtml);
+      iframeDoc.close();
 
-    img.onload = () => finishPDF(doc, invoiceData, startX, lineHeight, currentY, img);
-    img.onerror = () => finishPDF(doc, invoiceData, startX, lineHeight, currentY);
+      // Wait for images and styles to load
+      await new Promise((resolve) => {
+        iframe.onload = resolve;
+        setTimeout(resolve, 1000); // Extended timeout for safety
+      });
+      // Small delay for rendering
+      await new Promise(r => setTimeout(r, 500));
 
-  } catch (error) {
-    console.error('Error generating PDF:', error);
-    setModalMessage('PDF generation failed. Please try again.');
-    setModalOpen(true);
-  }
-};
+      // Capture the iframe body as an image
+      const canvas = await html2canvas(iframeDoc.body, {
+        scale: 2, // Improve quality
+        useCORS: true,
+        logging: false,
+        width: 800, // Force capture width
+        windowWidth: 800
+      });
 
-// PDF oluşturmayı tek bir fonksiyona al, logo hatası da yönetilir
-function finishPDF(doc, invoiceData, startX, lineHeight, currentY, img) {
-  if (img) doc.addImage(img, 'PNG', 150, 10, 50, 20);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const imgProps = doc.getImageProperties(imgData);
+      
+      const pdfWidth = a4Width - (margin * 2);
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-  doc.setFontSize(24);
-  doc.text('INVOICE', startX, currentY);
+      doc.addImage(imgData, 'JPEG', margin, margin, pdfWidth, pdfHeight);
 
-  currentY += lineHeight * 3;
-  doc.setFontSize(14);
+      const pdfArrayBuffer = doc.output('arraybuffer');
+      setPdfBytes(pdfArrayBuffer);
 
-  doc.text('Customer Information:', startX, currentY);
-  currentY += lineHeight;
-  doc.text(`Name: ${invoiceData.clientName || 'N/A'}`, startX, currentY);
-  currentY += lineHeight;
-  doc.text(`Email: ${invoiceData.clientEmail || 'N/A'}`, startX, currentY);
+      if (shouldDownload) {
+        doc.save(`invoice-${invoiceNumber || 'unknown'}.pdf`);
+      }
+      
+      document.body.removeChild(iframe);
+      console.log('PDF generated successfully as image.');
 
-  currentY += lineHeight * 2;
-  doc.text('Service Information:', startX, currentY);
-  currentY += lineHeight;
-  doc.text(`Amount: ${formatAmount(invoiceData.amount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
-
-  if (invoiceData.discount > 0) {
-    currentY += lineHeight;
-    doc.text(`Discount: ${invoiceData.discount}%`, startX, currentY);
-    currentY += lineHeight;
-    doc.text(`Discounted Amount: ${formatAmount(invoiceData.finalAmount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
-  }
-
-  currentY += lineHeight * 2;
-  doc.text(`Total Amount: ${formatAmount(invoiceData.finalAmount || 0)} ${invoiceData.currency || 'N/A'}`, startX, currentY);
-  currentY += lineHeight;
-  doc.text(`Invoice Number: ${invoiceData.invoiceNumber || 'N/A'}`, startX, currentY);
-  currentY += lineHeight;
-  doc.text(`Issue Date: ${invoiceData.issueDate || 'N/A'}`, startX, currentY);
-  currentY += lineHeight;
-  doc.text(`Due Date: ${invoiceData.dueDate || 'N/A'}`, startX, currentY);
-  currentY += lineHeight;
-  doc.text(`Tax Information: ${invoiceData.taxInfo || 'N/A'}`, startX, currentY);
-  currentY += lineHeight;
-  doc.text(`Notes: ${invoiceData.notes || 'N/A'}`, startX, currentY);
-
-  currentY += lineHeight * 2;
-  doc.setFontSize(12);
-  doc.setTextColor(100);
-  doc.text('This is a digital invoice. No wet signature required.', startX, currentY);
-
-  // PDF bytes sadece lokal değişkende
-  const pdfArrayBuffer = doc.output('arraybuffer');
-  setPdfBytes(pdfArrayBuffer); // state güncellenir ama recursive trigger olmaz
-
-  doc.save(`invoice-${invoiceData.invoiceNumber || 'unknown'}.pdf`);
-  console.log('PDF generated successfully.');
-}
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setModalMessage('PDF generation failed. Please try again.');
+      setModalOpen(true);
+      const existingIframe = document.querySelector('iframe[style*="-9999px"]');
+      if (existingIframe) document.body.removeChild(existingIframe);
+    }
+  };
 
   const sendInvoiceEmail = async () => {
   if (!pdfBytes) {
@@ -225,8 +260,14 @@ function finishPDF(doc, invoiceData, startX, lineHeight, currentY, img) {
     // Notların string olduğundan emin ol
     const safeNotes = typeof notes === 'string' ? notes : JSON.stringify(notes);
 
-    // PDF'i Base64'e dönüştür, state'i tetiklemeden lokal değişkende kullan
-    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
+    // Use FileReader to convert PDF bytes to Base64 safely (avoids stack overflow)
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    await new Promise((resolve) => { 
+        reader.onloadend = resolve; 
+    });
+    const pdfBase64 = reader.result.split(',')[1];
 
     const payload = {
       clientEmail,
@@ -237,6 +278,7 @@ function finishPDF(doc, invoiceData, startX, lineHeight, currentY, img) {
         clientName,
         clientEmail,
         serviceDescription,
+        amount: parseFloat(amount) || 0, // Add amount (subtotal) - CRITICAL for email template
         taxInfo,
         issueDate,
         dueDate,
@@ -318,10 +360,31 @@ function finishPDF(doc, invoiceData, startX, lineHeight, currentY, img) {
                 <div className="button-group">
                   <button className="edit-button" onClick={() => setIsEditing(true)}>Edit</button>
                   <button className="delete-button" onClick={() => setDeleteDialogOpen(true)}>Delete</button>
-                  <button className="pdf-button" onClick={() => generatePDF(invoice)}>Download as PDF</button>
+                  <button className="pdf-button" onClick={() => generatePDF(invoice, true)}>Download as PDF</button>
                   {showSendEmailButton && <button className="pdf-button" onClick={sendInvoiceEmail}>Send Email</button>}
                 </div>
-                <InvoicePreview invoice={invoice} />
+                
+                <div style={{ marginTop: '30px', borderTop: '1px solid #ccc', paddingTop: '20px' }}>
+                  <h3>Invoice Preview</h3>
+                  {emailPreviewHtml ? (
+                    <div style={{ 
+                      border: '1px solid #ddd', 
+                      borderRadius: '8px', 
+                      overflow: 'hidden',
+                      marginTop: '15px' 
+                    }}>
+                      <iframe 
+                        srcDoc={emailPreviewHtml}
+                        title="Invoice Preview"
+                        width="100%"
+                        height="600px"
+                        style={{ border: 'none', display: 'block' }}
+                      />
+                    </div>
+                  ) : (
+                    <p>Loading preview...</p>
+                  )}
+                </div>
               </div>
             )}
           </>
