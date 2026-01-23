@@ -7,6 +7,11 @@ import Footer from '../components/Footer';
 import Price from '../components/Price';
 import UserCount from '../components/UserCount';
 import CustomerReview from '../components/CustomerReview';
+import ProblemSolution from '../components/ProblemSolution';
+import WhoIsThisFor from '../components/WhoIsThisFor';
+import InvoicePreview from '../components/InvoicePreview';
+import FinalCTA from '../components/FinalCTA';
+import Partners from '../components/Partners';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -32,14 +37,17 @@ function LandingPage() {
     const heroTexts = heroRef.current.querySelectorAll(
       '.hero-container h1, .hero-container p, .hero-container button'
     );
-    gsap.from(heroTexts, {
-      y: 60,
-      opacity: 0,
-      duration: 1,
-      ease: 'power3.out',
-      stagger: 0.2,
-      delay: 0.5,
-    });
+    gsap.fromTo(heroTexts, 
+      { y: 60, autoAlpha: 0 },
+      {
+        y: 0,
+        autoAlpha: 1,
+        duration: 1,
+        ease: 'power3.out',
+        stagger: 0.2,
+        delay: 0.5,
+      }
+    );
 
     // Floating gradient wave animation (moves gently left and right)
     gsap.to(floatingBgRef.current, {
@@ -53,21 +61,26 @@ function LandingPage() {
     // Scroll-triggered sections
     const scrollAnimations = [
       { ref: featuresRef, y: 50 },
-      { ref: priceRef, scale: 0.8 },
-      { ref: howItWorksRef, x: -100 },
+      { ref: priceRef, scale: 0.9 }, // Reduced scale effect for smoothness
+      { ref: howItWorksRef, x: -50 },
     ];
 
     scrollAnimations.forEach(({ ref, ...anim }) => {
-      gsap.from(ref.current, {
-        opacity: 0,
-        duration: 1,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: ref.current,
-          start: 'top 80%',
-        },
-        ...anim,
-      });
+      gsap.fromTo(ref.current, 
+        { autoAlpha: 0, ...anim },
+        {
+          autoAlpha: 1,
+          x: 0,
+          y: 0,
+          scale: 1,
+          duration: 1,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: ref.current,
+            start: 'top 85%',
+          },
+        }
+      );
     });
   }, []);
 
@@ -79,17 +92,29 @@ function LandingPage() {
         <HeroSection />
       </div>
 
+      <Partners />
+
+      <ProblemSolution />
+      <WhoIsThisFor />
+      <InvoicePreview />
+
       <div ref={featuresRef}>
         <Features />
       </div>
-      <div ref={priceRef}>
-        <Price />
-      </div>
-      <UserCount />
-      <CustomerReview />
+
       <div ref={howItWorksRef}>
         <HowItWorks />
       </div>
+
+      <UserCount />
+      <CustomerReview />
+
+      <div ref={priceRef}>
+        <Price />
+      </div>
+
+      <FinalCTA />
+
       <Footer />
     </>
   );
