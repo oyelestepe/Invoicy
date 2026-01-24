@@ -264,14 +264,16 @@ const InvoiceCreation = () => {
             clientName,
             clientEmail,
             serviceDescription,
+            amount: parseFloat(amount) || 0,
             taxInfo,
-            paymentDate,
-            finalAmount: parseFloat(finalAmount), // Ensure finalAmount is a number
+            issueDate,
+            dueDate,
+            finalAmount: parseFloat(finalAmount),
             currency,
             discount,
             notes,
-            logoFile: null, // Set logoFile to null if not defined
-            pdfBytes: pdfBytes ? btoa(String.fromCharCode(...new Uint8Array(pdfBytes))) : '', // Send PDF bytes as base64 string
+            logoFile: null,
+            pdfBytes: pdfBytes ? btoa(String.fromCharCode(...new Uint8Array(pdfBytes))) : '',
           },
         }),
       });
