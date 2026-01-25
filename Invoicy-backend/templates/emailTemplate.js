@@ -1,8 +1,8 @@
 const getInvoiceEmailHtml = (data) => {
   const { invoiceNumber, finalAmount, amount, clientName, currency = '₺', issueDate, dueDate, taxInfo, discount, notes, serviceDescription } = data;
 
-  const formatMoney = (val) => Number(val).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currency;
-  const formatDate = (date) => new Date(date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const formatMoney = (val) => Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currency;
+  const formatDate = (date) => new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return `
 <!DOCTYPE html>
@@ -23,8 +23,8 @@ const getInvoiceEmailHtml = (data) => {
             <td style="padding: 40px;">
               <table width="100%">
                 <tr>
-                  <td style="color: #94a3b8; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Ödenecek Tutar</td>
-                  <td align="right" style="color: #ffffff; font-size: 20px; font-weight: bold;">INVOICY</td>
+                  <td style="color: #94a3b8; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Total Due</td>
+                  <td align="right"><img src="http://localhost:5000/public/logo.png" alt="INVOICY" style="height: 40px; width: auto;" /></td>
                 </tr>
                 <tr>
                   <td style="color: #ffffff; font-size: 36px; font-weight: bold; padding-top: 10px;">${formatMoney(finalAmount)}</td>
@@ -39,15 +39,15 @@ const getInvoiceEmailHtml = (data) => {
                <table width="100%">
                  <tr>
                     <td width="33%">
-                      <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Müşteri</div>
+                      <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Client</div>
                       <div style="font-size: 14px; color: #334155; font-weight: 600;">${clientName}</div>
                     </td>
                     <td width="33%" align="center">
-                      <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Fatura Tarihi</div>
+                      <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Invoice Date</div>
                       <div style="font-size: 14px; color: #334155; font-weight: 600;">${formatDate(issueDate)}</div>
                     </td>
                     <td width="33%" align="right">
-                      <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Vade</div>
+                      <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Due Date</div>
                       <div style="font-size: 14px; color: #334155; font-weight: 600;">${formatDate(dueDate)}</div>
                     </td>
                  </tr>
@@ -59,8 +59,8 @@ const getInvoiceEmailHtml = (data) => {
             <td style="padding: 40px;">
               <table width="100%" cellspacing="0" cellpadding="0">
                  <tr>
-                    <td style="padding-bottom: 10px; font-size: 12px; color: #94a3b8; border-bottom: 2px solid #f1f5f9;">AÇIKLAMA</td>
-                    <td align="right" style="padding-bottom: 10px; font-size: 12px; color: #94a3b8; border-bottom: 2px solid #f1f5f9;">TUTAR</td>
+                    <td style="padding-bottom: 10px; font-size: 12px; color: #94a3b8; border-bottom: 2px solid #f1f5f9;">DESCRIPTION</td>
+                    <td align="right" style="padding-bottom: 10px; font-size: 12px; color: #94a3b8; border-bottom: 2px solid #f1f5f9;">AMOUNT</td>
                  </tr>
                  <tr>
                     <td style="padding: 20px 0; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 15px;">${serviceDescription}</td>
@@ -71,16 +71,21 @@ const getInvoiceEmailHtml = (data) => {
                     <td style="padding-top: 20px;">
                        <table width="100%">
                           <tr>
-                             <td style="color: #64748b; font-size: 14px;">Ara Toplam</td>
+                             <td style="color: #64748b; font-size: 14px;">Subtotal</td>
                              <td align="right" style="color: #334155; font-size: 14px;">${formatMoney(amount)}</td>
                           </tr>
+                          ${discount ? `
+                          <tr>
+                             <td style="color: #64748b; font-size: 14px; padding-top: 5px;">Discount (${discount}%)</td>
+                             <td align="right" style="color: #334155; font-size: 14px; padding-top: 5px;">-${formatMoney(amount * (discount / 100))}</td>
+                          </tr>` : ''}
                           ${taxInfo ? `
                           <tr>
-                             <td style="color: #64748b; font-size: 14px; padding-top: 5px;">KDV</td>
+                             <td style="color: #64748b; font-size: 14px; padding-top: 5px;">Tax</td>
                              <td align="right" style="color: #334155; font-size: 14px; padding-top: 5px;">${taxInfo}</td>
                           </tr>` : ''}
                           <tr>
-                             <td style="color: #1e293b; font-size: 16px; font-weight: bold; padding-top: 10px; border-top: 1px solid #e2e8f0; margin-top: 10px;">Genel Toplam</td>
+                             <td style="color: #1e293b; font-size: 16px; font-weight: bold; padding-top: 10px; border-top: 1px solid #e2e8f0; margin-top: 10px;">Total</td>
                              <td align="right" style="color: #1e293b; font-size: 16px; font-weight: bold; padding-top: 10px; border-top: 1px solid #e2e8f0; margin-top: 10px;">${formatMoney(finalAmount)}</td>
                           </tr>
                        </table>
@@ -98,7 +103,7 @@ const getInvoiceEmailHtml = (data) => {
 
           <tr>
             <td style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 12px;">
-               Bu e-posta otomatik olarak gönderilmiştir. &copy; 2026 Invoicy.
+               This email was sent automatically. &copy; 2026 Invoicy.
             </td>
           </tr>
         
