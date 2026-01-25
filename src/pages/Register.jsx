@@ -31,7 +31,29 @@ const Register = () => {
     
     try {
       await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      alert('Kayıt başarılı!');
+      
+      // Send welcome email (don't block registration if email fails)
+      try {
+        const response = await fetch('http://localhost:5000/send-welcome-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            name: formData.name
+          })
+        });
+        
+        if (response.ok) {
+          console.log('Welcome email sent successfully');
+        } else {
+          console.warn('Failed to send welcome email, but registration succeeded');
+        }
+      } catch (emailError) {
+        console.error('Welcome email error:', emailError);
+        // Continue with registration flow even if email fails
+      }
       navigate('/login');
     } catch (error) {
       alert('Kayıt sırasında hata oluştu: ' + error.message);
