@@ -2,28 +2,29 @@
     max-width: 800px;
     margin: 20px auto;
     padding: 20px;
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    font-family: 'Arial', sans-serif;
+    box-shadow: var(--glass-shadow);
   }
   
   .invoice-details-container h2 {
     font-size: 24px;
-    color: #333333;
+    color: var(--text-light);
     margin-bottom: 20px;
     text-align: center;
   }
   
   .invoice-details-container p {
     font-size: 16px;
-    color: #555555;
+    color: var(--text-gray);
     margin-bottom: 10px;
   }
   
   .invoice-details-container strong {
-    color: #333333;
+    color: var(--text-light);
   }
   
   .invoice-details-container input,
@@ -31,7 +32,7 @@
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--glass-border);
     border-radius: 5px;
     font-size: 14px;
     outline: none;
@@ -40,7 +41,7 @@
   
   .invoice-details-container input:focus,
   .invoice-details-container textarea:focus {
-    border-color: #3b82f6;
+    border-color: var(--primary);
   }
   
   .invoice-details-container textarea {
@@ -64,12 +65,12 @@
   }
   
   .button-group button.edit-button {
-    background-color: #3b82f6;
+    background-color: var(--primary);
     color: white;
   }
   
   .button-group button.edit-button:hover {
-    background-color: #2563eb;
+    filter: brightness(1.1);
   }
   
   .button-group button.delete-button {

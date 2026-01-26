@@ -14,8 +14,8 @@ const generatePdf = (invoice) => {
     // PDF'i blob-stream ile işle
     const stream = doc.pipe(blobStream());
 
-    // Logo ekle (opsiyonel)
-    // doc.image("path/to/logo.png", 50, 45, { width: 50 });
+    // Logo ekle
+    doc.image("/logo.png", 50, 45, { width: 50 });
 
     // Başlık
     doc.fontSize(25).text("Fatura", { align: "center" });
