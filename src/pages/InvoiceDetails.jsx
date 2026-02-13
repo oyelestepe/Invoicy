@@ -72,8 +72,9 @@ const InvoiceDetails = () => {
       setEmailPreviewHtml(data.html);
     } catch (error) {
       console.error('Error fetching email preview:', error);
-      setModalMessage('Could not load email preview.');
-      setModalOpen(true);
+      // Silently continue without email preview (for production environments)
+      // This allows the page to still function even if the backend is not available
+      setEmailPreviewHtml(null);
     }
   };
 
@@ -126,14 +127,10 @@ const InvoiceDetails = () => {
   useEffect(() => {
     if (invoice) {
         fetchEmailPreview();
+        // Generate PDF directly without waiting for email preview
+        generatePDFDirectly(false);
     }
   }, [invoice]);
-
-  useEffect(() => {
-    if (emailPreviewHtml) {
-        generatePDF(false);
-    }
-  }, [emailPreviewHtml]);
 
   const updateInvoice = async () => {
     try {
@@ -249,6 +246,95 @@ const InvoiceDetails = () => {
     }
   };
 
+  const generatePDFDirectly = async (shouldDownload = false) => {
+    try {
+      if (!invoice) {
+        console.warn('Invoice data not ready yet.');
+        return;
+      }
+
+      const doc = new jsPDF('p', 'pt', 'a4');
+      const a4Width = 595.28;
+      const margin = 20;
+      let yPosition = margin;
+      const lineHeight = 20;
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // Title
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.text('INVOICE', margin, yPosition);
+      yPosition += lineHeight * 1.5;
+
+      // Invoice details
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Invoice Number: ${invoiceNumber}`, margin, yPosition);
+      yPosition += lineHeight;
+      doc.text(`Issue Date: ${issueDate}`, margin, yPosition);
+      yPosition += lineHeight;
+      doc.text(`Due Date: ${dueDate}`, margin, yPosition);
+      yPosition += lineHeight * 1.5;
+
+      // Client details
+      doc.setFont('Helvetica', 'bold');
+      doc.text('Bill To:', margin, yPosition);
+      yPosition += lineHeight;
+      doc.setFont('Helvetica', 'normal');
+      doc.text(`${clientName}`, margin, yPosition);
+      yPosition += lineHeight;
+      doc.text(`${clientEmail}`, margin, yPosition);
+      yPosition += lineHeight * 1.5;
+
+      // Service description
+      doc.setFont('Helvetica', 'bold');
+      doc.text('Description:', margin, yPosition);
+      yPosition += lineHeight;
+      doc.setFont('Helvetica', 'normal');
+      doc.text(serviceDescription, margin, yPosition, { maxWidth: a4Width - margin * 2 });
+      yPosition += lineHeight * 2;
+
+      // Amount details
+      doc.setFont('Helvetica', 'bold');
+      doc.text(`Subtotal: ${currency} ${amount}`, margin, yPosition);
+      yPosition += lineHeight;
+      if (discount > 0) {
+        doc.text(`Discount: -${discount}%`, margin, yPosition);
+        yPosition += lineHeight;
+      }
+      if (taxInfo) {
+        doc.text(`Tax: ${taxInfo}`, margin, yPosition);
+        yPosition += lineHeight;
+      }
+      doc.setFontSize(12);
+      doc.text(`Total: ${currency} ${finalAmount || amount}`, margin, yPosition);
+      yPosition += lineHeight * 1.5;
+
+      // Notes
+      if (notes) {
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text('Notes:', margin, yPosition);
+        yPosition += lineHeight;
+        doc.setFont('Helvetica', 'normal');
+        doc.text(notes, margin, yPosition, { maxWidth: a4Width - margin * 2 });
+      }
+
+      const pdfArrayBuffer = doc.output('arraybuffer');
+      setPdfBytes(pdfArrayBuffer);
+
+      if (shouldDownload) {
+        doc.save(`invoice-${invoiceNumber || 'unknown'}.pdf`);
+      }
+
+      console.log('PDF generated successfully.');
+    } catch (error) {
+      console.error('Error generating PDF directly:', error);
+      setModalMessage('PDF generation failed. Please try again.');
+      setModalOpen(true);
+    }
+  };
+
   const sendInvoiceEmail = async () => {
   if (!pdfBytes) {
     setModalMessage('PDF generation failed. Please try again.');
@@ -307,7 +393,7 @@ const InvoiceDetails = () => {
     setModalOpen(true);
   } catch (error) {
     console.error('Error sending email:', error);
-    setModalMessage('An error occurred while sending the email.');
+    setModalMessage('Email service is currently unavailable. The backend server is not running. Please ensure your backend server is running on http://localhost:5000');
     setModalOpen(true);
   }
 };
@@ -360,7 +446,7 @@ const InvoiceDetails = () => {
                 <div className="button-group">
                   <button className="edit-button" onClick={() => setIsEditing(true)}>Edit</button>
                   <button className="delete-button" onClick={() => setDeleteDialogOpen(true)}>Delete</button>
-                  <button className="pdf-button" onClick={() => generatePDF(invoice, true)}>Download as PDF</button>
+                  <button className="pdf-button" onClick={() => generatePDFDirectly(true)}>Download as PDF</button>
                   {showSendEmailButton && <button className="pdf-button" onClick={sendInvoiceEmail}>Send Email</button>}
                 </div>
                 

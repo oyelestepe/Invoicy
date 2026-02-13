@@ -18,9 +18,8 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/create-invoice" element={<ProtectedRoute><InvoiceCreation /></ProtectedRoute>} />
-      <Route path="/invoice/:invoiceId" element={<InvoiceDetails />} />
+      <Route path="/invoice/:invoiceId" element={<ProtectedRoute><InvoiceDetails /></ProtectedRoute>} />
       <Route path='/faq' element={<FaQ />} />
-      <Route path="/invoice/:invoiceId" element={<InvoiceDetails />} />
     </Routes>
   </Router>
   );
