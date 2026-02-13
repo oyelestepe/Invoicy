@@ -127,8 +127,7 @@ const InvoiceDetails = () => {
   useEffect(() => {
     if (invoice) {
         fetchEmailPreview();
-        // Generate PDF directly without waiting for email preview
-        generatePDFDirectly(false);
+        // PDF generation removed from here - user can click 'Download as PDF' button instead
     }
   }, [invoice]);
 

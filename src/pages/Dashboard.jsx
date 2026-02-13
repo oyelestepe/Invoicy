@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, orderBy, getDocs, limit, startAfter, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -136,7 +136,7 @@ const Dashboard = () => {
               <div className="invoice-info">
                 <strong>{invoice.clientName}</strong> - {invoice.amount} {invoice.currency}
                 <br />
-                <a href={`/invoice/${invoice.id}`}>Details and Download PDF</a>
+                <Link to={`/invoice/${invoice.id}`}>Details and Download PDF</Link>
               </div>
               <button onClick={() => handleClickOpen(invoice.id)} className="delete-button">
                 <FaTrash />
