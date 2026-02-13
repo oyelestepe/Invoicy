@@ -4,7 +4,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
-import '@/pages/css/invoiceCreation.css';
+// import '@/pages/css/invoiceCreation.css';
 import { jsPDF } from 'jspdf';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
 
