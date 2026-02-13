@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      '@': '/src', // Add alias for src directory
       buffer: 'buffer/',
     }
   },
