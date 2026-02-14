@@ -6,7 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/Navbar';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import './css/invoiceDetails.css';
+import './pagesCss/invoiceDetails.css';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
 import { FreeSerifBase64 } from '../components/FreeSerifBase64';
 

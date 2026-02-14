@@ -7,7 +7,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { FaTrash } from 'react-icons/fa';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
-import './css/dashboard.css';
+import './pagesCss/dashboard.css';
 
 const Dashboard = () => {
   const [invoices, setInvoices] = useState([]);
